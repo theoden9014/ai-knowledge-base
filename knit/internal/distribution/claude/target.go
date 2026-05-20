@@ -1,0 +1,12 @@
+package claude
+
+import "github.com/theoden9014/ai-knowledge-base/knit/internal/source"
+
+// Target is the source.Target constant representing the distribution target
+// handled by this package.
+// Its value is the kebab-case string "claude", matching the string that appears
+// as a key in Entry.Tools and as an element of Pack.DefaultTools.
+//
+// The Target() methods of this package's Builder / Installer / Uninstaller /
+// Lister all return this value.
+const Target source.Target = "claude"
