@@ -1,42 +1,42 @@
-# Knowledge Format 仕様
+# Knowledge Format Specification
 
-`knowledge/` 配下に置く中立フォーマットの正式仕様。`knit` はこの形式を入力として読み、各 AI ツール固有のフォーマット・ディレクトリ構造に変換する。
+The formal specification of the neutral format stored under `knowledge/`. `knit` reads this format as input and converts it into each AI tool's specific format and directory structure.
 
-ルート [README.md](../README.md) の「ナレッジの抽象モデル」「ナレッジパック」セクションが概念モデルにあたる。本ドキュメントはそれを満たす実ファイルのスキーマを定義する。
+The "Abstract knowledge model" and "Knowledge packs" sections in the root [README.md](../README.md) define the conceptual model. This document defines the schema of the actual files that satisfy that model.
 
 ---
 
-## ファイル構成
+## File Structure
 
 ```text
 knowledge/
 └── <pack-name>/
-    ├── manifest.yaml          # パック定義（必須）
+    ├── manifest.yaml          # Pack definition (required)
     ├── skills/<name>.md       # kind: skill
     ├── agents/<name>.md       # kind: agent
     ├── rules/<name>.md        # kind: rule
     └── prompts/<name>.md      # kind: prompt
 ```
 
-- `<pack-name>` / `<name>` は kebab-case
-- `manifest.yaml` 以外のサブディレクトリは、その kind を含むエントリが 1 つ以上ある場合に作る（不要なディレクトリは置かない）
+- `<pack-name>` / `<name>` use kebab-case
+- Subdirectories other than `manifest.yaml` are created only when at least one entry of that kind exists (do not keep unnecessary directories)
 
 ---
 
-## id 命名規約
+## `id` Naming Convention
 
-各ナレッジファイルは中立な ID を持つ。形式:
+Each knowledge file has a neutral ID in the following format:
 
 ```text
 <pack-name>.<kind>.<entry-name>
 ```
 
-- ピリオド `.` 区切り
-- 各セグメントは kebab-case
-- `<kind>` は `skill` / `agent` / `rule` / `prompt`
-- パック内で一意
+- Segments are separated by periods `.`
+- Each segment uses kebab-case
+- `<kind>` is one of `skill` / `agent` / `rule` / `prompt`
+- Unique within a pack
 
-例:
+Examples:
 
 ```text
 structure-behavior-design.skill.orchestrator
@@ -45,126 +45,126 @@ structure-behavior-design.agent.solid-reviewer
 
 ---
 
-## 共通 frontmatter スキーマ
+## Common Frontmatter Schema
 
-すべてのナレッジファイルは YAML frontmatter + Markdown 本文の形式を取る。
+All knowledge files use YAML frontmatter followed by a Markdown body.
 
-| field | type | 必須 | 説明 |
+| field | type | Required | Description |
 |---|---|:---:|---|
-| `id` | string | ✓ | 上記命名規約に従う中立 ID |
-| `kind` | enum (`skill` / `agent` / `rule` / `prompt`) | ✓ | ナレッジの種類 |
-| `name` | string | ✓ | ターゲットツールに渡される識別子。慣例として `<pack-name>-<entry-name>` |
-| `description` | string | ✓ | 概要。複数行は `\|` で折り返し可 |
-| `tags` | string[] | - | 分類用タグ |
-| `tools` | map<target, ToolConfig> | - | ターゲット別設定（後述） |
-| `uses_skills` | string[] | - | 依存スキルの中立 ID 配列。`kind: agent` のみで意味を持つ |
+| `id` | string | ✓ | Neutral ID following the naming convention above |
+| `kind` | enum (`skill` / `agent` / `rule` / `prompt`) | ✓ | Knowledge type |
+| `name` | string | ✓ | Identifier passed to the target tool. By convention, `<pack-name>-<entry-name>` |
+| `description` | string | ✓ | Summary. Multi-line values may wrap with `\|` |
+| `tags` | string[] | - | Tags for classification |
+| `tools` | map<target, ToolConfig> | - | Target-specific settings (described below) |
+| `uses_skills` | string[] | - | Array of neutral IDs for dependent skills. Only meaningful for `kind: agent` |
 
 ### `tools.<target>` (ToolConfig)
 
-ターゲットごとのビルド指示。
+Build instructions for each target.
 
-| field | type | 必須 | 説明 |
+| field | type | Required | Description |
 |---|---|:---:|---|
-| `enabled` | bool | - | `true` のときビルドの対象にする。省略時は `manifest.yaml` の `default_tools` に従う |
-| `frontmatter` | map<string, any> | - | ターゲット固有 frontmatter として、生成物の frontmatter にそのまま展開する追加メタデータ |
+| `enabled` | bool | - | When `true`, include the entry in the build target. If omitted, follow `default_tools` in `manifest.yaml` |
+| `frontmatter` | map<string, any> | - | Additional metadata expanded directly into the generated frontmatter as target-specific frontmatter |
 
 ---
 
-## kind 別の追加ルール
+## Additional Rules by `kind`
 
 ### `kind: skill`
 
-- 追加フィールドなし
-- 本文は手順・観点・出力形式の定義
+- No additional fields
+- The body defines procedures, viewpoints, and output formats
 
 ### `kind: agent`
 
-- `uses_skills` で依存スキルを中立 ID で宣言できる
-- 本文は専門担当の役割・レビュー観点・出力形式
+- Dependencies can be declared in `uses_skills` using neutral skill IDs
+- The body defines the specialist's role, review perspectives, and output format
 
-ビルダーは `uses_skills` の中立 ID をターゲットの参照形式に変換する（例: Claude Code 向けでは `<name>` を抽出して `skills:` 配列に展開する）。
+Builders convert the neutral IDs in `uses_skills` into the target tool's reference format (for example, for Claude Code, extract `<name>` and expand it into the `skills:` array).
 
 ### `kind: rule`
 
-- 追加フィールドは未定義（将来拡張）
-- 本文は常時適用される指示・前提
+- No additional fields are currently defined (reserved for future extension)
+- The body defines always-on instructions and assumptions
 
-複数の rule をどう合成して 1 ファイルにまとめるか（順序・見出しの付与など）の規約は別途定義する。
+The rules for combining multiple rule entries into one file, including ordering and heading conventions, are defined separately.
 
 ### `kind: prompt`
 
-- 追加フィールドは未定義（将来拡張）
-- 本文は再利用可能なプロンプト・スラッシュコマンドの内容
+- No additional fields are currently defined (reserved for future extension)
+- The body contains reusable prompts and slash command content
 
 ---
 
-## manifest.yaml スキーマ
+## `manifest.yaml` Schema
 
-パック単位の定義ファイル。`knowledge/<pack-name>/manifest.yaml` に置く。
+The definition file for a pack, located at `knowledge/<pack-name>/manifest.yaml`.
 
-| field | type | 必須 | 説明 |
+| field | type | Required | Description |
 |---|---|:---:|---|
-| `pack` | string | ✓ | パック名（kebab-case）。ディレクトリ名と一致 |
+| `pack` | string | ✓ | Pack name in kebab-case. Must match the directory name |
 | `version` | string | ✓ | semver |
-| `description` | string | ✓ | パックの概要 |
-| `default_tools` | string[] | - | エントリ側で `tools.<target>.enabled` が省略された場合に有効化するターゲットの一覧 |
-| `entries` | Entry[] | ✓ | パックに含まれるエントリ一覧 |
+| `description` | string | ✓ | Pack overview |
+| `default_tools` | string[] | - | List of targets enabled when `tools.<target>.enabled` is omitted on an entry |
+| `entries` | Entry[] | ✓ | List of entries included in the pack |
 
 ### Entry
 
-| field | type | 必須 | 説明 |
+| field | type | Required | Description |
 |---|---|:---:|---|
-| `id` | string | ✓ | 該当ファイルの frontmatter `id` と一致 |
-| `path` | string | ✓ | パックルートからの相対パス（例: `skills/orchestrator.md`） |
+| `id` | string | ✓ | Must match the file's frontmatter `id` |
+| `path` | string | ✓ | Relative path from the pack root (for example, `skills/orchestrator.md`) |
 
-manifest と各ファイルの frontmatter は冗長だが、パック全体の一覧性とファイル単体の自己記述性の両方を担保するために両方を維持する。整合性チェックは `knit` のビルド時に行う。
-
----
-
-## tools.<target> の伝搬ルール
-
-`knit` のターゲット別ビルダーは以下のルールで生成物を作る。
-
-1. `tools.<target>.enabled` が `true`（または `default_tools` に含まれる）のエントリのみを対象にする
-2. 中立フィールド（`name`, `description`, `uses_skills` など）はビルダーがターゲットの慣習に従って変換して生成物の frontmatter に書く
-3. `tools.<target>.frontmatter` のキー / 値は、生成物の frontmatter にそのままマージする
-4. 同名フィールドが中立変換結果と `tools.<target>.frontmatter` の両方にある場合は、`tools.<target>.frontmatter` を優先する（個別オーバーライド）
+The manifest and each file's frontmatter are intentionally redundant so the repository preserves both pack-wide discoverability and self-description of individual files. Consistency checks are performed during `knit` builds.
 
 ---
 
-## 本文（Markdown）の扱い
+## Propagation Rules for `tools.<target>`
 
-- Markdown 本文はそのまま生成物の本文として転記する
-- 現スコープではテンプレート展開・変数置換・他エントリへのリンク解決は行わない
-- 将来、`[[id]]` 形式のクロスリファレンスや変数展開を導入する余地は残すが、本仕様には含めない
+Target-specific builders in `knit` generate artifacts using the following rules:
+
+1. Include only entries where `tools.<target>.enabled` is `true` or the target is included in `default_tools`
+2. Convert neutral fields such as `name`, `description`, and `uses_skills` according to the target's conventions and write them into the generated frontmatter
+3. Merge keys and values from `tools.<target>.frontmatter` directly into the generated frontmatter
+4. If the same field exists in both the neutral conversion result and `tools.<target>.frontmatter`, prioritize `tools.<target>.frontmatter` as an explicit override
 
 ---
 
-## バリデーション
+## Handling the Body (Markdown)
 
-中立フォーマットは [JSON Schema](https://json-schema.org/) でバリデーションする。スキーマファイルは `schema/` 直下に置く。
+- Copy the Markdown body as-is into the generated artifact body
+- In the current scope, do not perform template expansion, variable substitution, or link resolution to other entries
+- Future support for cross references such as `[[id]]` or variable expansion remains possible, but is not part of this specification
 
-| 対象 | スキーマファイル |
+---
+
+## Validation
+
+The neutral format is validated using [JSON Schema](https://json-schema.org/). Schema files are placed directly under `schema/`.
+
+| Target | Schema file |
 |---|---|
-| パック定義（`manifest.yaml`） | [`schema/manifest.schema.json`](../schema/manifest.schema.json) |
-| エントリ frontmatter（各 `.md` 冒頭） | [`schema/entry.schema.json`](../schema/entry.schema.json) |
+| Pack definition (`manifest.yaml`) | [`schema/manifest.schema.json`](../schema/manifest.schema.json) |
+| Entry frontmatter (top of each `.md`) | [`schema/entry.schema.json`](../schema/entry.schema.json) |
 
-`knit` のビルド時バリデーションと、エディタ（YAML Language Server 等）でのリアルタイムチェックの両方で同じスキーマを参照する。
+The same schemas are referenced both by build-time validation in `knit` and by real-time checks in editors such as YAML Language Server.
 
-### スキーマで強制している主な制約
+### Main constraints enforced by the schemas
 
-- `id` / `name` / `pack` などは kebab-case
-- `version` は semver
-- `id` は `<pack>.<kind>.<entry>` 形式、`uses_skills` の各要素は `<pack>.skill.<entry>` 形式
-- `kind: agent` 以外で `uses_skills` を書くとエラー
-- 未知のフィールド（例: スペルミス）は `additionalProperties: false` でエラーになる
+- `id`, `name`, `pack`, and similar fields use kebab-case
+- `version` uses semver
+- `id` must follow the format `<pack>.<kind>.<entry>`, and each `uses_skills` element must follow `<pack>.skill.<entry>`
+- Using `uses_skills` outside `kind: agent` is an error
+- Unknown fields such as typos are rejected through `additionalProperties: false`
 
 ---
 
-## 例
+## Examples
 
-サンプルは `knowledge/structure-behavior-design/` を参照。
+See `knowledge/structure-behavior-design/` for examples.
 
-- skill 例: [`knowledge/structure-behavior-design/skills/orchestrator.md`](../knowledge/structure-behavior-design/skills/orchestrator.md)
-- agent 例: [`knowledge/structure-behavior-design/agents/solid-reviewer.md`](../knowledge/structure-behavior-design/agents/solid-reviewer.md)
-- manifest 例: [`knowledge/structure-behavior-design/manifest.yaml`](../knowledge/structure-behavior-design/manifest.yaml)
+- Skill example: [`knowledge/structure-behavior-design/skills/orchestrator.md`](../knowledge/structure-behavior-design/skills/orchestrator.md)
+- Agent example: [`knowledge/structure-behavior-design/agents/solid-reviewer.md`](../knowledge/structure-behavior-design/agents/solid-reviewer.md)
+- Manifest example: [`knowledge/structure-behavior-design/manifest.yaml`](../knowledge/structure-behavior-design/manifest.yaml)

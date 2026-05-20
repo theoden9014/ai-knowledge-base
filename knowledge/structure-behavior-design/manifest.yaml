@@ -1,8 +1,9 @@
 pack: structure-behavior-design
 version: 0.1.0
 description: |
-  AI に手続き型実装を避けさせ、構造設計・責務設計・振る舞い仕様化・TDD・レビューを通して
-  実装させるためのナレッジパック。
+  A knowledge pack that guides AI to avoid procedural implementations and instead
+  implement through structural design, responsibility design, behavior specification,
+  TDD, and review.
 
 default_tools: [claude]
 

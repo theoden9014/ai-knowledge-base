@@ -1,39 +1,39 @@
-# Structure-Behavior Design: Claude Code Skills / Agents 設計書
+# Structure-Behavior Design: Claude Code Skills / Agents Design Document
 
-## 1. 目的
+## 1. Purpose
 
-この設計書は、Claude Code を用いた AI Coding において、AI がいきなり手続き型に実装することを避け、以下の流れで保守性の高い実装へ導くための Skill / Subagent 構成を定義する。
+This design document defines a Skill / Subagent structure for AI coding with Claude Code that prevents the AI from jumping straight into procedural implementation and instead guides it toward maintainable implementation through the following flow.
 
-- 要求を分析・仕様化する
-- 問題領域の構造をモデリングする
-- SOLID に基づいて責務を割り当てる
-- 境界とインターフェースを設計する
-- テストで振る舞いを仕様化する
-- TDD で実装する
-- 実装後に手続き型化・責務漏れ・過剰抽象をレビューする
+- Analyze and specify requirements
+- Model the structure of the problem domain
+- Assign responsibilities based on SOLID
+- Design boundaries and interfaces
+- Specify behavior through tests
+- Implement with TDD
+- Review for procedural drift, missing responsibilities, and over-abstraction after implementation
 
-このワークフローを **Structure-Behavior Design** と呼ぶ。
+This workflow is called **Structure-Behavior Design**.
 
-> 注意: `Structure-Behavior Design` は本設計内で定義する運用上の名称であり、標準化された公式手法名ではない。
+> Note: `Structure-Behavior Design` is an operational name defined within this design and is not a standardized official method name.
 
 ---
 
-## 2. 基本方針
+## 2. Core Policy
 
-### 2.1 設計思想
+### 2.1 Design Philosophy
 
-AI に単に「きれいなコードを書け」「SOLID に従え」「TDD で実装しろ」と指示するだけでは再現性が低い。
+Simply telling an AI to "write clean code," "follow SOLID," or "implement with TDD" is not reproducible enough.
 
-そこで、AI に以下を強制する。
+Instead, the AI is forced to do the following:
 
-1. 実装前に構造を設計する
-2. 実装前に責務を割り当てる
-3. 実装前にインターフェースを設計する
-4. 実装前にテストで振る舞いを仕様化する
-5. Red-Green-Refactor で実装する
-6. 実装後に専用 Agent でレビューする
+1. Design the structure before implementation
+2. Assign responsibilities before implementation
+3. Design interfaces before implementation
+4. Specify behavior through tests before implementation
+5. Implement with Red-Green-Refactor
+6. Review with dedicated Agents after implementation
 
-### 2.2 Structure と Behavior の分離
+### 2.2 Separation of Structure and Behavior
 
 ```text
 Structure Design
@@ -48,19 +48,19 @@ Behavior Design
   + TDD
 ```
 
-### 2.3 Skill と Agent の役割分担
+### 2.3 Role Split Between Skills and Agents
 
 ```text
 Skill:
-  作業手順・設計原則・出力形式を定義する
+  Defines work procedures, design principles, and output formats
 
 Agent:
-  各工程の成果物を専門的にレビューする
+  Reviews deliverables from each step with a specialized perspective
 ```
 
 ---
 
-## 3. ワークフロー
+## 3. Workflow
 
 ```text
 1. Requirements Analysis
@@ -75,24 +75,24 @@ Agent:
 10. Review and Refactoring
 ```
 
-日本語では以下とする。
+The workflow labels used in this design are:
 
 ```text
-1. 要求分析
-2. 要求仕様化
-3. 概念モデリング / 構造設計
-4. SOLID に基づく責務割り当て
-5. アーキテクチャ設計
-6. インターフェース設計
-7. テスト仕様化 / 振る舞い設計
-8. 詳細設計
-9. TDD による構築
-10. レビュー / リファクタリング
+1. Requirements Analysis
+2. Requirements Specification
+3. Conceptual Modeling / Structure Design
+4. SOLID-Guided Responsibility Assignment
+5. Architectural Design
+6. Interface Design
+7. Test Specification / Behavior Design
+8. Detailed Design
+9. TDD Construction
+10. Review / Refactoring
 ```
 
 ---
 
-## 4. ディレクトリ構成
+## 4. Directory Structure
 
 ```text
 ~/.claude/
@@ -127,34 +127,34 @@ Agent:
 
 ---
 
-## 5. Skill 設計
+## 5. Skill Design
 
-### 5.1 公開 Skill
+### 5.1 Public Skill
 
 #### `structure-behavior-design-orchestrator`
 
-メインエージェントから使う公開入口。
+The public entry point used from the main agent.
 
 ```text
-目的:
-  Structure-Behavior Design の全体ワークフローを制御する。
+Purpose:
+  Control the overall Structure-Behavior Design workflow.
 
-役割:
-  - 要求からいきなり実装させない
-  - 各設計工程の成果物を要求する
-  - リスクレベルに応じてレビュー Agent を使う
-  - TDD 実装とレビューまで導く
+Role:
+  - Prevent implementation directly from requirements
+  - Require deliverables from each design step
+  - Use review Agents according to risk level
+  - Drive the process through TDD implementation and review
 ```
 
-この Skill には `disable-model-invocation: true` も `user-invocable: false` も付けない。
+This Skill should not include either `disable-model-invocation: true` or `user-invocable: false`.
 
 ---
 
-### 5.2 内部 Skill
+### 5.2 Internal Skills
 
-内部 Skill は Subagent preload 用に使う。
+Internal Skills are used for Subagent preload.
 
-対象:
+Targets:
 
 ```text
 structure-behavior-design-requirements-specification
@@ -166,13 +166,13 @@ structure-behavior-design-tdd-construction
 structure-behavior-design-refactoring-review
 ```
 
-内部 Skill の frontmatter 方針:
+Frontmatter policy for internal Skills:
 
 ```yaml
 user-invocable: false
 ```
 
-ただし、Subagent の `skills:` で preload するため、以下は付けない。
+However, because they are preloaded via a Subagent `skills:` entry, the following must not be added:
 
 ```yaml
 disable-model-invocation: true
@@ -180,7 +180,7 @@ disable-model-invocation: true
 
 ---
 
-## 6. Skill 実装ドラフト
+## 6. Draft Skill Implementations
 
 ## 6.1 `structure-behavior-design-orchestrator/SKILL.md`
 
@@ -917,7 +917,7 @@ Do not:
 
 ---
 
-# 7. Agent 実装ドラフト
+# 7. Draft Agent Implementations
 
 ## 7.1 `structure-behavior-design-requirements-reviewer.md`
 
@@ -1251,7 +1251,7 @@ Return findings in this format:
 
 ---
 
-# 8. Subagent と Skill の対応
+# 8. Subagent-to-Skill Mapping
 
 ```text
 structure-behavior-design-requirements-reviewer
@@ -1294,92 +1294,92 @@ structure-behavior-design-code-quality-reviewer
 
 ---
 
-# 9. 運用例
+# 9. Usage Examples
 
-## 9.1 詳細に依頼する場合
+## 9.1 When requesting in detail
 
 ```text
-structure-behavior-design-orchestrator を使って進めて。
-いきなり実装せず、要求仕様化、概念モデリング、SOLID責務設計、インターフェース設計、テスト仕様化まで出して。
-設計後に該当 reviewer を通してから、TDD で実装して。
-実装後は procedural-code-detector と code-quality-reviewer を通して。
+Proceed using structure-behavior-design-orchestrator.
+Do not implement immediately. First produce requirements specification, conceptual modeling, SOLID responsibility design, interface design, and test specification.
+After the design phase, pass it through the relevant reviewers, then implement with TDD.
+After implementation, run both procedural-code-detector and code-quality-reviewer.
 ```
 
-## 9.2 短く依頼する場合
+## 9.2 When requesting briefly
 
 ```text
-Structure-Behavior Design で進めて。
-構造設計とテスト仕様化を先にやって、TDDで実装し、最後に手続き型化をレビューして。
+Proceed with Structure-Behavior Design.
+Do structure design and test specification first, implement with TDD, and review for procedural drift at the end.
 ```
 
-## 9.3 高リスク変更の場合
+## 9.3 For high-risk changes
 
 ```text
-Structure-Behavior Design の high-risk process で進めて。
-実装前に要求、概念モデル、責務設計、アーキテクチャ、インターフェース、テスト仕様を出して。
-実装には進まず、まず設計レビューまで実施して。
+Proceed with the high-risk process of Structure-Behavior Design.
+Before implementation, produce requirements, a conceptual model, responsibility design, architecture, interfaces, and test specifications.
+Do not move into implementation yet. First complete the design review.
 ```
 
 ---
 
-# 10. 設計上の注意
+# 10. Design Notes
 
-## 10.1 内部 Skill の扱い
+## 10.1 Handling Internal Skills
 
-内部 Skill は `user-invocable: false` にする。
+Internal Skills should use `user-invocable: false`.
 
 ```yaml
 user-invocable: false
 ```
 
-ただし、Subagent preload に使うため、以下は付けない。
+However, because they are used for Subagent preload, the following must not be added:
 
 ```yaml
 disable-model-invocation: true
 ```
 
-## 10.2 Subagent の Skill 利用制御
+## 10.2 Controlling Subagent Skill Usage
 
-Subagent には `skills:` で必要な Skill を preload する。
+Subagents preload the necessary Skills through `skills:`.
 
-また、原則として以下を付ける。
+As a rule, they should also include the following:
 
 ```yaml
 disallowedTools: Skill
 ```
 
-これにより、preload 済み Skill を基準にレビューさせつつ、追加 Skill 呼び出しを防ぐ運用に寄せる。
+This supports a workflow where review is performed against the preloaded Skills while preventing additional Skill invocation.
 
-## 10.3 完全なアクセス制御ではない
+## 10.3 Not Complete Access Control
 
-`skills:` は preload 指定であり、厳密な Skill access control そのものではない。
+`skills:` defines preload behavior and is not strict Skill access control by itself.
 
-そのため、完全に特定 Agent 専用にしたい知識は、Skill ではなく Agent markdown body に直接書く選択肢もある。
+If some knowledge must truly be limited to a specific Agent, another option is to write it directly in the Agent markdown body rather than as a Skill.
 
 ---
 
-# 11. 最終方針
+# 11. Final Policy
 
-この設計では、以下を採用する。
+This design adopts the following:
 
 ```text
-名前:
+Name:
   Structure-Behavior Design
 
 Prefix:
   structure-behavior-design-
 
-公開入口:
+Public entry point:
   structure-behavior-design-orchestrator
 
-内部 Skill:
-  工程ごとに分割
+Internal Skills:
+  Split by workflow step
 
-Agent:
-  レビュー観点ごとに分割
+Agents:
+  Split by review perspective
 
-目的:
-  AI にいきなり手続き型実装させず、
-  構造設計・責務設計・振る舞い仕様化・TDD・レビューを通して実装させる。
+Purpose:
+  Prevent the AI from jumping directly into procedural implementation
+  and instead make it implement through structural design,
+  responsibility design, behavior specification, TDD, and review.
 ```
-

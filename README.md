@@ -1,144 +1,89 @@
 # AI Knowledge Base
 
-個人で利用する複数の AI コーディングツール（Claude Code / Codex CLI / Gemini CLI など）に対し、再利用可能なナレッジ（Skill・Agent・常時適用ルール・スラッシュコマンド等）を**単一のリポジトリで一元管理**し、各ツールのローカル設定ディレクトリへ反映するためのリポジトリ。
+An open repository for managing reusable AI coding knowledge across tools such as Claude Code, Codex CLI, and Gemini CLI.
 
-## ゴール
+The repository keeps prompts, skills, agents, and always-on rules in a tool-neutral source format under `knowledge/`, then converts and installs them into each tool's local configuration layout through [`knit`](./knit/README.md).
 
-- ナレッジの源泉（source of truth）は 1 箇所に置く
-- ツール固有の配置・フォーマットの差分はビルダーが吸収する
-- ローカル環境への反映が再現性高くできる
-- 新しいナレッジ・新しい対象ツールの追加が低コスト
+## What This Repository Is For
 
-## 非ゴール
+- Keep knowledge in one source of truth
+- Reuse the same workflows across multiple AI coding tools
+- Absorb tool-specific format and directory differences through builders
+- Make local installation reproducible and maintainable
 
-- 各ツールの全機能の網羅（必要になった概念から追加する）
-- チーム配布・共有用途（個人運用を前提とする）
-- ナレッジの自動生成（人手で書いたものを配布する仕組み）
-
----
-
-## 基本方針
-
-### 二層アーキテクチャ
+## How It Works
 
 ```text
-knowledge/   …  ツール中立な「源泉」(source)
-    │
-    │  ビルド → 配布
-    ▼
-~/.claude/, ~/.codex/, ~/.gemini/  …  ローカル環境
+knowledge/   ->   tool-neutral source
+      | 
+      v
+knit        ->   build and install for each target tool
+      |
+      v
+tool config directories such as ~/.claude/ and ~/.gemini/
 ```
 
-- `knowledge/` … 人が編集する唯一の場所
-- ビルド … 各ツール固有のフォーマット・ディレクトリ構造へ変換する
-- 配布 … 各ツールのローカル設定ディレクトリにファイルをコピーして反映する
+This repository uses four tool-neutral kinds:
 
-### ナレッジの抽象モデル
+| kind | purpose |
+| ---- | ------- |
+| `skill` | Reusable procedures, viewpoints, and output formats for a task |
+| `agent` | A specialist role, such as a reviewer operating in an isolated context |
+| `rule` | Instructions that should always apply |
+| `prompt` | Reusable prompts or slash-command style entry points |
 
-ツール固有の概念名（Claude Code の「Skill」「Subagent」など）に縛られず、本リポジトリでは以下 4 つの**ツール中立な型 (kind)** で表現する。
+These kinds are internal abstractions. Each target tool may map them differently.
 
-| kind   | 意味                                                              |
-| ------ | ----------------------------------------------------------------- |
-| skill  | 特定のタスクで参照する手順・観点・出力形式の定義                  |
-| agent  | 特定の観点で動く専門担当（独立コンテキストで動くレビュアー等）    |
-| rule   | 常時適用される指示・前提                                          |
-| prompt | 再利用可能なプロンプト・スラッシュコマンド                        |
-
-kind は本リポジトリでの中立呼称であり、各ツール側の概念とは 1:1 とは限らない。マッピングは各ツール向けビルダーが担う。
-
-### ナレッジパック
-
-関連する成果物の集合を**ナレッジパック (pack)** と呼び、`knowledge/<pack-name>/` 単位で管理する。
-
-- 1 パック = 1 つのテーマ・ワークフロー（例: `structure-behavior-design`）
-- パック内にマニフェストを置き、含まれる成果物と対応ツールを宣言する
-- パック単位で対象ツール・有効/無効を切り替え可能にする
-
----
-
-## ディレクトリ構成
+## Repository Layout
 
 ```text
 ai-knowledge-base/
 ├── README.md
-├── docs/                                 # 仕様書・設計書類
-├── knowledge/                            # 唯一の編集対象（source of truth）
+├── docs/                 # format and design documentation
+├── knowledge/            # canonical editable source
 │   └── <pack-name>/
-│       ├── manifest.<ext>                # パック定義
+│       ├── manifest.yaml
 │       ├── skills/
 │       ├── agents/
 │       ├── rules/
 │       └── prompts/
-├── knit/                                 # AI ナレッジのパッケージ管理ツール（詳細は knit/README.md）
-└── .gitignore
+├── knit/                 # build/install tool
+└── schema/               # validation schemas
 ```
 
-- `knowledge/` 配下は kebab-case 統一
-- パック名は複数パックが共存しても衝突しない名前にする
-- 必要に応じてビルダーが `<pack-name>-<entity-name>` のように prefix を付ける
+The content model is documented in [docs/knowledge-format.md](./docs/knowledge-format.md).
 
----
+## Tool Support
 
-## ビルドと配布
+Current implementation work is centered on Claude Code, Codex CLI, and Gemini CLI.
 
-### ビルド
+Support is intentionally builder-driven: the source format stays stable while each target decides how that source is rendered and installed.
 
-- `knowledge/` の中立フォーマットを各ツール固有のフォーマット・ディレクトリ構造に変換する
-- 対象ツール・対象パックを指定して部分ビルドできるようにする
-- ビルド成果物はリポジトリには含めない（再生成可能）
+## Why Keep a Tool-Neutral Source?
 
-ビルドと後述の配布は、本リポジトリ内 `knit/` で開発するパッケージ管理ツール `knit` が一手に担う（詳細は [knit/README.md](./knit/README.md)）。
+The same workflow often needs to run on more than one AI coding tool. If each tool had its own copy of the same knowledge, maintenance would quickly diverge. A neutral source keeps the content authored once and lets builders handle per-tool translation.
 
-### 配布
+## Contributing
 
-- ビルド結果を各ツールのローカル設定ディレクトリ（例: `~/.claude/`）へファイルをコピーして反映する
-- 配布物は本リポジトリのコミットハッシュ・ファイル単位のチェックサム等でバージョン管理し、ローカルと配布元の差分を検出できる状態を保つ
-- 差分があるときは明示的なコマンドで更新できる
-- ユーザーが手で書いた既存設定を保護する仕組み（衝突検知）を持つ
-- アンインストール（本リポジトリ由来の配布物だけを除去）も可能にする
+Issues and pull requests are welcome.
 
----
+Good contributions include:
 
-## ツール対応マトリックス
+- New knowledge packs
+- Improvements to existing packs
+- New target-tool builders
+- Validation, packaging, and installation improvements in `knit`
+- Documentation fixes and clarifications
 
-| 概念 / ツール | Claude Code           | Codex CLI | Gemini CLI | その他 |
-| ------------- | --------------------- | --------- | ---------- | ------ |
-| skill         | `~/.claude/skills/`   | TBD       | TBD        | TBD    |
-| agent         | `~/.claude/agents/`   | TBD       | TBD        | TBD    |
-| rule          | `~/.claude/CLAUDE.md` | TBD       | TBD        | TBD    |
-| prompt        | `~/.claude/commands/` | TBD       | TBD        | TBD    |
+When contributing knowledge content, keep it tool-neutral unless a target-specific override is strictly necessary.
 
-「TBD」は各ツール固有の配置仕様を未確認のもの。対応着手時に確認した上で確定する。
+## License
 
----
+This repository uses different licenses for code and knowledge content.
 
-## 設計上の判断と理由
+| area | license | scope |
+| ---- | ------- | ----- |
+| Code and tooling | [MIT License](./LICENSE) | `knit/`, `docs/`, `schema/`, `README.md`, and other non-`knowledge/` files |
+| Knowledge packs | [CC BY-SA 4.0](./knowledge/LICENSE) ([deed](https://creativecommons.org/licenses/by-sa/4.0/)) | all content under `knowledge/` |
 
-### なぜツール中立な源泉を持つか
-
-仕様書の Skill / Agent 構造は Claude Code に強く依存しているが、将来的に同じワークフローを他ツールで動かしたいニーズが想定される。ツールごとに別ファイルで管理すると本文の二重メンテが避けられないため、中立形式 → ビルダー変換で本文は 1 箇所に閉じ込める。
-
-### なぜビルド成果物をリポジトリに含めないか
-
-自動生成物のコミットは差分レビューを汚し、変更履歴のノイズになる。ビルドが再現できれば成果物のバージョン管理は不要。
-
-### なぜシンボリックリンクではなくコピー配布か
-
-シンボリックリンクは一部ツール・OS で正しく扱えない可能性があり、ローカルでの動作の安定性に影響する。ファイルコピーであれば対象ツールがリンクを解釈できるかに依らず動作する。代わりにバージョン管理（コミットハッシュ・チェックサム）と差分検知で「リポジトリでの編集が反映漏れになる」リスクを補う。
-
-### なぜスクリプト直書きに寄せないか
-
-shell スクリプト群はテスト・型・依存解決が弱く、ナレッジパックや対象ツールが増えた時のメンテ性が落ちる。実装手段は別途検討する。
-
----
-
-## ライセンス
-
-本リポジトリは領域ごとに異なるライセンスを適用する。
-
-| 領域                 | ライセンス                                                                                 | 適用範囲                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| ツール・その他コード | [MIT License](./LICENSE)                                                                   | `knit/`、`docs/`、`schema/`、`README.md` 等、`knowledge/` 配下を除く全て |
-| ナレッジパック       | [CC BY-SA 4.0](./knowledge/LICENSE) ([deed](https://creativecommons.org/licenses/by-sa/4.0/)) | `knowledge/` 配下の全コンテンツ                                           |
-
-ナレッジパックを利用・改変・再配布する場合は、CC BY-SA 4.0 に従って (1) クレジット表示、(2) 改変の明示、(3) 同一ライセンス（または BY-SA 互換ライセンス）での公開が必要となる。
+If you modify or redistribute knowledge packs, follow the attribution and share-alike requirements of CC BY-SA 4.0.
