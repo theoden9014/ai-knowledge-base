@@ -1,0 +1,42 @@
+pack: structure-behavior-design
+version: 0.1.0
+description: |
+  AI に手続き型実装を避けさせ、構造設計・責務設計・振る舞い仕様化・TDD・レビューを通して
+  実装させるためのナレッジパック。
+
+default_tools: [claude]
+
+entries:
+  - id: structure-behavior-design.skill.orchestrator
+    path: skills/orchestrator.md
+  - id: structure-behavior-design.skill.requirements-specification
+    path: skills/requirements-specification.md
+  - id: structure-behavior-design.skill.conceptual-modeling
+    path: skills/conceptual-modeling.md
+  - id: structure-behavior-design.skill.solid-responsibility
+    path: skills/solid-responsibility.md
+  - id: structure-behavior-design.skill.interface-design
+    path: skills/interface-design.md
+  - id: structure-behavior-design.skill.test-specification
+    path: skills/test-specification.md
+  - id: structure-behavior-design.skill.tdd-construction
+    path: skills/tdd-construction.md
+  - id: structure-behavior-design.skill.refactoring-review
+    path: skills/refactoring-review.md
+
+  - id: structure-behavior-design.agent.requirements-reviewer
+    path: agents/requirements-reviewer.md
+  - id: structure-behavior-design.agent.model-reviewer
+    path: agents/model-reviewer.md
+  - id: structure-behavior-design.agent.solid-reviewer
+    path: agents/solid-reviewer.md
+  - id: structure-behavior-design.agent.architecture-reviewer
+    path: agents/architecture-reviewer.md
+  - id: structure-behavior-design.agent.interface-reviewer
+    path: agents/interface-reviewer.md
+  - id: structure-behavior-design.agent.test-reviewer
+    path: agents/test-reviewer.md
+  - id: structure-behavior-design.agent.procedural-code-detector
+    path: agents/procedural-code-detector.md
+  - id: structure-behavior-design.agent.code-quality-reviewer
+    path: agents/code-quality-reviewer.md

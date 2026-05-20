@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-knowledge-base/schema/manifest.schema.json",
+  "title": "Knowledge Pack Manifest",
+  "description": "Schema for knowledge/<pack-name>/manifest.yaml",
+  "type": "object",
+  "required": ["pack", "version", "description", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "pack": {
+      "type": "string",
+      "description": "Pack name. Must match the parent directory name and be kebab-case.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (semver) of the pack.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "default_tools": {
+      "type": "array",
+      "description": "Targets enabled by default when an entry omits tools.<target>.enabled.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Entry" }
+    }
+  },
+  "$defs": {
+    "Entry": {
+      "type": "object",
+      "required": ["id", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Neutral entry id in the form <pack>.<kind>.<name>.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent|rule|prompt)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path of the entry file relative to the pack root.",
+          "pattern": "^(skills|agents|rules|prompts)/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
+        }
+      }
+    }
+  }
+}

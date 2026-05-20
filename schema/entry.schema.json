@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-knowledge-base/schema/entry.schema.json",
+  "title": "Knowledge Entry Frontmatter",
+  "description": "Schema for the YAML frontmatter of each knowledge entry markdown file under knowledge/<pack>/{skills,agents,rules,prompts}/<name>.md.",
+  "type": "object",
+  "required": ["id", "kind", "name", "description"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Neutral entry id in the form <pack>.<kind>.<name>.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent|rule|prompt)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["skill", "agent", "rule", "prompt"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Identifier passed to the target tool. Conventionally <pack>-<entry-name>.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "tools": {
+      "type": "object",
+      "description": "Per-target build directives. Keys are target tool names (claude, codex, gemini, ...).",
+      "additionalProperties": { "$ref": "#/$defs/ToolConfig" }
+    },
+    "uses_skills": {
+      "type": "array",
+      "description": "Dependent skill ids. Only meaningful when kind is agent.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.skill\\.[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "kind": { "const": "agent" } },
+        "required": ["kind"]
+      },
+      "then": {},
+      "else": {
+        "not": { "required": ["uses_skills"] }
+      }
+    }
+  ],
+  "$defs": {
+    "ToolConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, this entry is built for the target. If omitted, falls back to manifest.default_tools."
+        },
+        "frontmatter": {
+          "type": "object",
+          "description": "Target-specific frontmatter fields merged into the generated file's frontmatter.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
