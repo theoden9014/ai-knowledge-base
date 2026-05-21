@@ -88,12 +88,8 @@ func TestNewInstaller(t *testing.T) {
 			if got == nil {
 				t.Fatal("NewInstaller() returned nil")
 			}
-			wantResolver := newPathResolver(tt.userRoot, tt.projectRoot)
-			if diff := cmp.Diff(wantResolver, got.resolver, cmp.AllowUnexported(pathResolver{})); diff != "" {
-				t.Errorf("resolver mismatch (-want +got):\n%s", diff)
-			}
-			if got.labels != labels {
-				t.Errorf("labels store not preserved")
+			if got.Target() != Target {
+				t.Errorf("Installer.Target() = %q, want %q", got.Target(), Target)
 			}
 		})
 	}

@@ -31,17 +31,16 @@ func NewPathResolver(policy PathPolicy, roots InventoryRoots) (*PathResolver, er
 // Target returns the Target this resolver belongs to.
 func (r *PathResolver) Target() source.Target { return r.policy.Target() }
 
-// Resolve validates p against the PathPolicy, then joins it with the
-// InventoryRoot for scope. Returns ErrInvalidArtifactPath when p violates
-// the policy, ErrInvalidScope when scope is invalid, and
-// ErrProjectRootNotConfigured when scope=project but no project root is
-// configured.
+// Resolve validates scope first, then p, and finally joins them. The
+// scope-before-policy ordering matches the error precedence documented in
+// refactoring-interface-design.md (ErrInvalidScope and
+// ErrProjectRootNotConfigured precede ErrInvalidArtifactPath).
 func (r *PathResolver) Resolve(scope Scope, p source.ArtifactPath) (AbsoluteArtifactPath, error) {
-	if err := r.policy.Validate(p); err != nil {
-		return AbsoluteArtifactPath{}, err
-	}
 	root, err := r.roots.For(scope)
 	if err != nil {
+		return AbsoluteArtifactPath{}, err
+	}
+	if err := r.policy.Validate(p); err != nil {
 		return AbsoluteArtifactPath{}, err
 	}
 	return root.Join(p)

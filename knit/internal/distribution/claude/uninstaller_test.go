@@ -32,8 +32,16 @@ func TestUninstaller_Contract(t *testing.T) {
 		fabricate := func(t *testing.T, scope inventory.Scope) inventory.Installation {
 			t.Helper()
 			art := sampleSkillArtifact()
+			rel, err := source.NewArtifactPath(art.Path)
+			if err != nil {
+				t.Fatalf("NewArtifactPath: %v", err)
+			}
+			id, err := inventory.NewInstallationIDFromArtifactPath(rel)
+			if err != nil {
+				t.Fatalf("NewInstallationIDFromArtifactPath: %v", err)
+			}
 			return inventory.Installation{
-				ID:    ins.resolver.installationID(art.Path),
+				ID:    id,
 				Label: inventory.Label{Target: Target, Scope: scope},
 				Provenance: inventory.Provenance{
 					SourceEntryIDs: []string{"p.skill.sample"},

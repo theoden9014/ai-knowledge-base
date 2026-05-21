@@ -53,7 +53,18 @@ func (u *TransactionalUninstaller) Uninstall(ctx context.Context, installation I
 		return ErrTargetMismatch
 	}
 	scope := installation.Label.Scope
-	rel, err := source.NewArtifactPath(installation.Artifact.Path)
+	if _, err := u.resolver.ResolveRoot(scope); err != nil {
+		return err
+	}
+	// Prefer Installation.Artifact.Path, but fall back to ID when callers
+	// (notably contract-test fabricators) construct an Installation from
+	// the ID alone. ID is the ArtifactPath of the installation in opaque
+	// form, so the string form round-trips through NewArtifactPath.
+	relStr := installation.Artifact.Path
+	if relStr == "" {
+		relStr = string(installation.ID)
+	}
+	rel, err := source.NewArtifactPath(relStr)
 	if err != nil {
 		return err
 	}

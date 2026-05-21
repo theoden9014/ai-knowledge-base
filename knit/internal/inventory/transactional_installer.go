@@ -55,6 +55,12 @@ func (i *TransactionalInstaller) Install(ctx context.Context, scope Scope, artif
 	if artifact.Target != i.Target() {
 		return Installation{}, ErrTargetMismatch
 	}
+	// Validate scope (and project-root configuration) before parsing the
+	// artifact path so the documented error precedence (scope -> path) is
+	// preserved.
+	if _, err := i.resolver.ResolveRoot(scope); err != nil {
+		return Installation{}, err
+	}
 	rel, err := source.NewArtifactPath(artifact.Path)
 	if err != nil {
 		return Installation{}, err
