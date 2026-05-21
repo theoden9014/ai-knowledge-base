@@ -135,7 +135,6 @@ func TestBuildCommand_Run_remoteURL(t *testing.T) {
 	}
 }
 
-
 // TestUninstallCommand_Run_rejectsRemoteURL verifies that uninstall
 // refuses URL args even with a Fetcher registered. The rejection is
 // unconditional; see cmd_uninstall.go's Run godoc for the rationale.

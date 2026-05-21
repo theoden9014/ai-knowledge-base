@@ -36,7 +36,7 @@ func TestListCommand_Run_afterInstall(t *testing.T) {
 	install := NewInstallCommand()
 	if err := runCommand(t, install, rt, []string{
 		"--scope=user", "--target=claude",
-		 f.pack,
+		f.pack,
 	}); err != nil {
 		t.Fatalf("install: %v", err)
 	}

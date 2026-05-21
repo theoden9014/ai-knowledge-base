@@ -31,7 +31,7 @@ func TestInstallCommand_Run_singleTarget(t *testing.T) {
 	err := runCommand(t, cmd, rt, []string{
 		"--scope=user",
 		"--target=claude",
-		
+
 		f.pack,
 	})
 	if err != nil {
@@ -63,7 +63,7 @@ func TestInstallCommand_Run_invalidScope(t *testing.T) {
 	err := runCommand(t, cmd, rt, []string{
 		"--scope=global",
 		"--target=claude",
-		
+
 		f.pack,
 	})
 	if !errors.Is(err, ErrInvalidFlagValue) {
@@ -78,7 +78,7 @@ func TestInstallCommand_Run_targetAll_multiTargetSuccess(t *testing.T) {
 	err := runCommand(t, cmd, rt, []string{
 		"--scope=user",
 		"--target=all",
-		
+
 		f.pack,
 	})
 	if err != nil {

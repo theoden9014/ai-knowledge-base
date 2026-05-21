@@ -21,7 +21,7 @@ func TestBuildCommand_Run_listOnly(t *testing.T) {
 	cmd := NewBuildCommand()
 	if err := runCommand(t, cmd, rt, []string{
 		"--target=claude",
-		
+
 		f.pack,
 	}); err != nil {
 		t.Fatalf("Run err: %v", err)
@@ -42,7 +42,7 @@ func TestBuildCommand_Run_withOutputDir(t *testing.T) {
 	cmd := NewBuildCommand()
 	if err := runCommand(t, cmd, rt, []string{
 		"--target=claude",
-		
+
 		"-o", outDir,
 		f.pack,
 	}); err != nil {
@@ -63,7 +63,7 @@ func TestBuildCommand_Run_rejectsAllTarget(t *testing.T) {
 	cmd := NewBuildCommand()
 	err := runCommand(t, cmd, rt, []string{
 		"--target=all",
-		
+
 		f.pack,
 	})
 	if !errors.Is(err, ErrInvalidFlagValue) {

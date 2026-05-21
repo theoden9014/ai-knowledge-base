@@ -24,7 +24,7 @@ func TestUpdateCommand_Run_afterInstall(t *testing.T) {
 	install := NewInstallCommand()
 	if err := runCommand(t, install, rt, []string{
 		"--scope=user", "--target=claude",
-		 f.pack,
+		f.pack,
 	}); err != nil {
 		t.Fatalf("install: %v", err)
 	}
@@ -46,7 +46,7 @@ body v2
 	cmd := NewUpdateCommand()
 	if err := runCommand(t, cmd, rt, []string{
 		"--scope=user", "--target=claude",
-		 f.pack,
+		f.pack,
 	}); err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestUpdateCommand_Run_skipsTargetsWithoutPriorInstall(t *testing.T) {
 	cmd := NewUpdateCommand()
 	if err := runCommand(t, cmd, rt, []string{
 		"--scope=user", "--target=claude",
-		 f.pack,
+		f.pack,
 	}); err != nil {
 		t.Fatalf("Run err: %v", err)
 	}

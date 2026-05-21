@@ -58,3 +58,32 @@ var ErrLabelAlreadyExists = errors.New("inventory: label already exists")
 // role as distribution-side errors such as claude's
 // ErrProjectRootNotConfigured.
 var ErrLabelsRootNotConfigured = errors.New("inventory: labels root not configured")
+
+// ErrInvalidInventoryRoot is returned when a string is rejected as an
+// InventoryRoot because it is empty or not an absolute path.
+var ErrInvalidInventoryRoot = errors.New("inventory: invalid inventory root")
+
+// ErrProjectRootNotConfigured is returned by InventoryRoots.For when the
+// caller requests the project root but no project root was configured at
+// construction time.
+var ErrProjectRootNotConfigured = errors.New("inventory: project root not configured")
+
+// ErrArtifactPathEscape is returned when joining an InventoryRoot with an
+// ArtifactPath yields a path that resolves outside the root after lexical
+// cleaning.
+var ErrArtifactPathEscape = errors.New("inventory: artifact path escapes inventory root")
+
+// ErrInvalidInstallationID is returned when constructing an InstallationID
+// from inputs that do not satisfy the construction contract (for example, an
+// empty ArtifactPath).
+var ErrInvalidInstallationID = errors.New("inventory: invalid installation id")
+
+// ErrPruneBoundaryViolation is returned by ArtifactWriter.PruneAncestorsWithin
+// when the requested child path does not lie within the boundary.
+var ErrPruneBoundaryViolation = errors.New("inventory: prune boundary violation")
+
+// ErrUnmanagedArtifactExists is returned by TransactionalInstaller preflight
+// when an artifact already exists at the destination but no knit-managed
+// Label is present, indicating that an external (non-knit) file occupies
+// the slot. Callers must remove the unmanaged file before installing.
+var ErrUnmanagedArtifactExists = errors.New("inventory: unmanaged artifact exists")

@@ -56,7 +56,7 @@ func TestExecute_goldenPath(t *testing.T) {
 
 	// install
 	rt, _, _ := f.runtime(t)
-	rt.Args = []string{"install", "--target=claude", "--scope=user",  f.pack}
+	rt.Args = []string{"install", "--target=claude", "--scope=user", f.pack}
 	if code := Execute(context.Background(), rt, "knit", "v0"); code != ExitSuccess {
 		t.Fatalf("install exit = %v", code)
 	}
