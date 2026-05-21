@@ -5,7 +5,7 @@ description: |
   implement through structural design, responsibility design, behavior specification,
   TDD, and review.
 
-default_tools: [claude]
+default_tools: [claude, codex, gemini]
 
 entries:
   - id: structure-behavior-design.skill.orchestrator
