@@ -30,9 +30,6 @@ func (b *Builder) Target() source.Target { return Target }
 
 // Build delegates to the registry.
 func (b *Builder) Build(ctx context.Context, pack *source.Pack) ([]source.Artifact, error) {
-	if pack == nil {
-		return nil, nil
-	}
 	return b.registry.Build(ctx, pack)
 }
 

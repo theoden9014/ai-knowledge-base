@@ -71,7 +71,13 @@ func (r *RendererRegistry) Target() Target { return r.target }
 // registered renderers. Rule entries are buffered and folded by the
 // registered RuleAggregator (if any) into a single Artifact appended at
 // the end of the result.
+//
+// A nil pack returns (nil, nil) so the contract matches across every
+// target Builder rather than depending on each implementation to guard.
 func (r *RendererRegistry) Build(ctx context.Context, pack *Pack) ([]Artifact, error) {
+	if pack == nil {
+		return nil, nil
+	}
 	entries := pack.EntriesFor(r.target)
 	var (
 		artifacts []Artifact

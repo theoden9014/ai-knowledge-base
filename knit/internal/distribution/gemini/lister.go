@@ -41,5 +41,3 @@ func (l *Lister) List(ctx context.Context, scope inventory.Scope) ([]inventory.I
 }
 
 var _ inventory.Lister = (*Lister)(nil)
-var _ inventory.Installer = (*Installer)(nil)
-var _ source.Builder = (*Builder)(nil)
