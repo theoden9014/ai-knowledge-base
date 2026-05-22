@@ -10,6 +10,6 @@ require (
 )
 
 require (
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.4 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
