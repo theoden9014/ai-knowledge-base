@@ -32,7 +32,7 @@ func (ruleAggregator) Aggregate(entries []*source.Entry, pack *source.Pack) (sou
 		buf.WriteString("\n## ")
 		buf.WriteString(e.Name)
 		buf.WriteString("\n\n")
-		buf.Write(ensureTrailingNewline(e.Body))
+		buf.Write(source.EnsureTrailingNewline(e.Body))
 	}
 	return source.Artifact{
 		Target:         Target,

@@ -17,7 +17,7 @@ func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, 
 	for k, v := range e.FrontmatterFor(Target) {
 		fm[k] = v
 	}
-	content, err := writeMarkdownWithFrontmatter(fm, e.Body)
+	content, err := frontmatterRenderer.Render(fm, e.Body)
 	if err != nil {
 		return source.Artifact{}, err
 	}

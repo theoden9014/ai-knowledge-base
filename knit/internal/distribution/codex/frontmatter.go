@@ -1,40 +1,8 @@
 package codex
 
-import (
-	"bytes"
-	"fmt"
-	"sort"
+import "github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 
-	"sigs.k8s.io/yaml"
-)
-
-// writeMarkdownWithFrontmatter returns YAML frontmatter plus a Markdown
-// body as a single byte slice. Keys are emitted in alphabetical order so
-// repeated runs over the same input produce identical bytes.
-func writeMarkdownWithFrontmatter(fm map[string]any, body []byte) ([]byte, error) {
-	keys := make([]string, 0, len(fm))
-	for k := range fm {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	var buf bytes.Buffer
-	buf.WriteString("---\n")
-	for _, k := range keys {
-		oneKey := map[string]any{k: fm[k]}
-		out, err := yaml.Marshal(oneKey)
-		if err != nil {
-			return nil, fmt.Errorf("codex: marshal frontmatter key %q: %w", k, err)
-		}
-		buf.Write(out)
-	}
-	buf.WriteString("---\n")
-	if len(body) > 0 {
-		buf.WriteString("\n")
-		buf.Write(body)
-		if body[len(body)-1] != '\n' {
-			buf.WriteByte('\n')
-		}
-	}
-	return buf.Bytes(), nil
-}
+// frontmatterRenderer is the shared MarkdownFrontmatter configuration
+// used by Codex's skill and prompt renderers. Codex inserts a blank line
+// between the closing "---" and the body, unlike Claude/Gemini.
+var frontmatterRenderer = source.MarkdownFrontmatter{BlankLineBeforeBody: true}

@@ -27,7 +27,7 @@ func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 	for k, v := range e.FrontmatterFor(Target) {
 		fm[k] = v
 	}
-	content, err := renderWithFrontmatter(fm, e.Body)
+	content, err := frontmatterRenderer.Render(fm, e.Body)
 	if err != nil {
 		return source.Artifact{}, err
 	}

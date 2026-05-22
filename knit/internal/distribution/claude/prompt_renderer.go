@@ -23,7 +23,7 @@ func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, 
 	return source.Artifact{
 		Target:         Target,
 		Path:           "commands/" + e.Name + ".md",
-		Content:        ensureTrailingNewline(e.Body),
+		Content:        source.EnsureTrailingNewline(e.Body),
 		SourceEntryIDs: []string{e.ID},
 	}, nil
 }

@@ -1,46 +1,19 @@
 package gemini
 
 import (
-	"bytes"
-	"fmt"
 	"reflect"
-	"sort"
 	"time"
 
-	"sigs.k8s.io/yaml"
+	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
-// composeYAMLFrontmatter joins fm (as YAML) with body. Output format:
-//
-//	---\n<yaml>---\n<body>
-//
-// Keys are emitted in alphabetical order so repeated runs over the same
-// input produce identical bytes. The underlying yaml.Marshal does not
-// guarantee map iteration order, so we marshal one key at a time after
-// sorting.
-func composeYAMLFrontmatter(fm map[string]any, body []byte) ([]byte, error) {
-	keys := make([]string, 0, len(fm))
-	for k := range fm {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	var buf bytes.Buffer
-	buf.WriteString("---\n")
-	for _, k := range keys {
-		single := map[string]any{k: fm[k]}
-		out, err := yaml.Marshal(single)
-		if err != nil {
-			return nil, fmt.Errorf("gemini: marshal frontmatter key %q: %w", k, err)
-		}
-		buf.Write(out)
-	}
-	buf.WriteString("---\n")
-	buf.Write(body)
-	return buf.Bytes(), nil
-}
+// frontmatterRenderer is the shared MarkdownFrontmatter configuration
+// used by Gemini's skill and agent renderers. Gemini does not insert a
+// blank line between the closing "---" and the body.
+var frontmatterRenderer = source.MarkdownFrontmatter{}
 
-// isTOMLEncodable recursively reports whether val is a Go type the prompt
-// renderer can encode as TOML.
+// isTOMLEncodable recursively reports whether val is a Go type the
+// prompt renderer can encode as TOML.
 func isTOMLEncodable(val any) bool {
 	if val == nil {
 		return true
