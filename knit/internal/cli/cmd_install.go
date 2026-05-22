@@ -114,7 +114,7 @@ func (c *installCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet)
 			failures = append(failures, TargetFailure{Target: string(target), Err: err})
 			continue
 		}
-		if err := c.installForTarget(ctx, rt, factory, rp.Pack, target, scope); err != nil {
+		if err := c.installForTarget(ctx, rt, factory, rp.Pack, rp.Source, target, scope); err != nil {
 			failures = append(failures, TargetFailure{Target: string(target), Err: err})
 		}
 	}
@@ -126,6 +126,7 @@ func (c *installCommand) installForTarget(
 	rt *Runtime,
 	factory *DistributionFactory,
 	pack *source.Pack,
+	ref source.SourceRef,
 	target source.Target,
 	scope inventory.Scope,
 ) error {
@@ -149,6 +150,7 @@ func (c *installCommand) installForTarget(
 		return err
 	}
 	for _, art := range artifacts {
+		art.SourceRef = ref
 		if _, err := installer.Install(ctx, scope, art); err != nil {
 			return fmt.Errorf("install %s/%s: %w", target, art.Path, err)
 		}

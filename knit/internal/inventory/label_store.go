@@ -1,6 +1,10 @@
 package inventory
 
-import "context"
+import (
+	"context"
+
+	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
+)
 
 // LabelData is the target-neutral data representation of the Label payload
 // persisted by LabelStore.
@@ -37,6 +41,11 @@ type LabelData struct {
 	// the Installation referenced by the Label. It is stored as a slice to
 	// preserve the correspondence with Provenance.
 	SourceEntryIDs []string
+
+	// SourceRef records where the source Pack was loaded from. Older labels
+	// may leave this zero; callers must treat the zero value as "unknown
+	// source" and fall back to whatever recovery flow they need.
+	SourceRef source.SourceRef
 }
 
 // LabelStore abstracts persistence for Labels associated with a (Target,

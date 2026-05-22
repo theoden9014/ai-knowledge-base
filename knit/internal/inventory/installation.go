@@ -25,6 +25,10 @@ type Provenance struct {
 	// It is stored as a slice to support cases where a single Artifact folds
 	// together multiple Entries, such as merged rules.
 	SourceEntryIDs []string
+
+	// SourceRef identifies where the source Pack was loaded from. It may be
+	// zero for installations written by older knit versions.
+	SourceRef source.SourceRef
 }
 
 // Packs returns the distinct pack names referenced by SourceEntryIDs, in

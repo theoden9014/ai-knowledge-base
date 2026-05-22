@@ -104,15 +104,10 @@ func loadPack(ctx context.Context, knowledgeDir, packName string) (*source.Pack,
 //     [source.ErrManifestNotFound] when the directory exists but has no
 //     manifest.yaml).
 func loadPackFromLocalDir(ctx context.Context, rt *Runtime, arg string) (*source.Pack, error) {
-	abs := arg
-	if !filepath.IsAbs(abs) {
-		wd, err := rt.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("cli: resolve working directory for %q: %w", arg, err)
-		}
-		abs = filepath.Join(wd, abs)
+	abs, err := canonicalLocalDirPath(rt, arg)
+	if err != nil {
+		return nil, err
 	}
-	abs = filepath.Clean(abs)
 	info, err := os.Stat(abs)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -126,6 +121,18 @@ func loadPackFromLocalDir(ctx context.Context, rt *Runtime, arg string) (*source
 	parent := filepath.Dir(abs)
 	base := filepath.Base(abs)
 	return loadPackFromFS(ctx, os.DirFS(parent), base)
+}
+
+func canonicalLocalDirPath(rt *Runtime, arg string) (string, error) {
+	abs := arg
+	if !filepath.IsAbs(abs) {
+		wd, err := rt.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("cli: resolve working directory for %q: %w", arg, err)
+		}
+		abs = filepath.Join(wd, abs)
+	}
+	return filepath.Clean(abs), nil
 }
 
 // loadPackFromFS is the shared inner helper that both [loadPack] and the
@@ -207,6 +214,7 @@ func stripURLScheme(arg string) string {
 type resolvedPack struct {
 	Pack    *source.Pack
 	Name    string
+	Source  source.SourceRef
 	Cleanup func() error
 }
 
@@ -264,6 +272,7 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 		return &resolvedPack{
 			Pack:    pack,
 			Name:    pack.Name,
+			Source:  source.SourceRef{Kind: source.SourceRefRemoteURL, Value: t.Cleaned},
 			Cleanup: fetched.Close,
 		}, nil
 	case ArgKindLocalPath:
@@ -271,9 +280,14 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 		if err != nil {
 			return nil, err
 		}
+		abs, err := canonicalLocalDirPath(rt, t.Cleaned)
+		if err != nil {
+			return nil, err
+		}
 		return &resolvedPack{
 			Pack:    pack,
 			Name:    pack.Name,
+			Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: abs},
 			Cleanup: func() error { return nil },
 		}, nil
 	case ArgKindPackName:
@@ -288,6 +302,7 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 		return &resolvedPack{
 			Pack:    pack,
 			Name:    pack.Name,
+			Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: filepath.Join(knowledgeDir, t.Cleaned)},
 			Cleanup: func() error { return nil },
 		}, nil
 	default:

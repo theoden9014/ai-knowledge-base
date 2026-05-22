@@ -78,11 +78,13 @@ func (l *TransactionalLister) List(ctx context.Context, scope Scope) ([]Installa
 			Label: Label{Target: l.Target(), Scope: scope},
 			Provenance: Provenance{
 				SourceEntryIDs: append([]string(nil), e.Data.SourceEntryIDs...),
+				SourceRef:      e.Data.SourceRef,
 			},
 			Artifact: source.Artifact{
 				Target:         l.Target(),
 				Path:           rel.String(),
 				SourceEntryIDs: append([]string(nil), e.Data.SourceEntryIDs...),
+				SourceRef:      e.Data.SourceRef,
 			},
 		})
 	}

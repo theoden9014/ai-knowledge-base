@@ -142,25 +142,55 @@ func (s *SidecarLabelStore) sidecarPath(scope Scope, id InstallationID) (string,
 // labelFile is the on-disk JSON representation of LabelData. Field names are
 // pinned here so renaming Go identifiers does not change the wire format.
 type labelFile struct {
-	SchemaVersion  int      `json:"schema_version"`
-	ArtifactPath   string   `json:"artifact_path"`
-	SourceEntryIDs []string `json:"source_entry_ids,omitempty"`
+	SchemaVersion  int            `json:"schema_version"`
+	ArtifactPath   string         `json:"artifact_path"`
+	SourceEntryIDs []string       `json:"source_entry_ids,omitempty"`
+	SourceRef      *sourceRefFile `json:"source_ref,omitempty"`
+}
+
+type sourceRefFile struct {
+	Kind  string `json:"kind,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+func (f sourceRefFile) toSourceRef() source.SourceRef {
+	return source.SourceRef{
+		Kind:  source.SourceRefKind(f.Kind),
+		Value: f.Value,
+	}
+}
+
+func toSourceRefFile(ref source.SourceRef) sourceRefFile {
+	return sourceRefFile{
+		Kind:  string(ref.Kind),
+		Value: ref.Value,
+	}
 }
 
 func (f labelFile) toData() LabelData {
+	var ref source.SourceRef
+	if f.SourceRef != nil {
+		ref = f.SourceRef.toSourceRef()
+	}
 	return LabelData{
 		SchemaVersion:  f.SchemaVersion,
 		ArtifactPath:   f.ArtifactPath,
 		SourceEntryIDs: append([]string(nil), f.SourceEntryIDs...),
+		SourceRef:      ref,
 	}
 }
 
 func toLabelFile(data LabelData) labelFile {
-	return labelFile{
+	lf := labelFile{
 		SchemaVersion:  data.SchemaVersion,
 		ArtifactPath:   data.ArtifactPath,
 		SourceEntryIDs: append([]string(nil), data.SourceEntryIDs...),
 	}
+	if !data.SourceRef.IsZero() {
+		ref := toSourceRefFile(data.SourceRef)
+		lf.SourceRef = &ref
+	}
+	return lf
 }
 
 // Set implements LabelStore.Set. See LabelStore.Set for the detailed contract.

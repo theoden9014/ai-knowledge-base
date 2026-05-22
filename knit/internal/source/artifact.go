@@ -27,4 +27,8 @@ type Artifact struct {
 	// (logging, labels, diagnostics) and may be empty for artifacts
 	// synthesized without a 1:1 mapping to an entry.
 	SourceEntryIDs []string
+
+	// SourceRef records where the containing Pack was loaded from so update can
+	// refresh by pack name without requiring the user to retype the path or URL.
+	SourceRef SourceRef
 }

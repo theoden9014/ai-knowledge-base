@@ -77,6 +77,20 @@ func (c *updateCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) 
 	if err != nil {
 		return err
 	}
+	triaged := TriageArg(packArg)
+	if triaged.Kind == ArgKindPackName {
+		ref, ok, err := c.remoteSourceForPackName(ctx, factory, targets, scope, triaged.Cleaned)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			for _, target := range targets {
+				_, _ = fmt.Fprintf(rt.Stderr, "warning: nothing to update for %s/%s (no prior installation of %q)\n", target, scope, triaged.Cleaned)
+			}
+			return nil
+		}
+		packArg = ref.Value
+	}
 	rp, err := loadPackFromArg(ctx, rt, packArg)
 	if err != nil {
 		return err
@@ -89,11 +103,72 @@ func (c *updateCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) 
 			failures = append(failures, TargetFailure{Target: string(target), Err: err})
 			continue
 		}
-		if err := c.updateForTarget(ctx, rt, factory, rp.Pack, target, scope, rp.Name); err != nil {
+		if err := c.updateForTarget(ctx, rt, factory, rp.Pack, rp.Source, target, scope, rp.Name); err != nil {
 			failures = append(failures, TargetFailure{Target: string(target), Err: err})
 		}
 	}
 	return aggregateOrSingle(len(targets), failures)
+}
+
+func (c *updateCommand) remoteSourceForPackName(
+	ctx context.Context,
+	factory *DistributionFactory,
+	targets []source.Target,
+	scope inventory.Scope,
+	packName string,
+) (source.SourceRef, bool, error) {
+	var found source.SourceRef
+	hasMatch := false
+	for _, target := range targets {
+		lister, err := factory.Lister(target)
+		if err != nil {
+			return source.SourceRef{}, false, err
+		}
+		insts, err := lister.List(ctx, scope)
+		if err != nil {
+			return source.SourceRef{}, false, err
+		}
+		for _, inst := range insts {
+			if !inst.Provenance.BelongsToPack(packName) {
+				continue
+			}
+			hasMatch = true
+			ref := inst.Provenance.SourceRef
+			switch {
+			case ref.Kind == source.SourceRefRemoteURL && ref.Value != "":
+				if found.IsZero() {
+					found = ref
+					continue
+				}
+				if found != ref {
+					return source.SourceRef{}, false, fmt.Errorf(
+						"%w: multiple remote sources recorded for %q; pass the source URL explicitly",
+						ErrUsage, packName,
+					)
+				}
+			case ref.Kind == source.SourceRefLocalPath:
+				return source.SourceRef{}, false, fmt.Errorf(
+					"%w: pack %q was installed from a local source; pass the source path explicitly",
+					ErrUsage, packName,
+				)
+			default:
+				return source.SourceRef{}, false, fmt.Errorf(
+					"%w: pack %q has no recorded remote source; pass the source path or URL explicitly",
+					ErrUsage, packName,
+				)
+			}
+		}
+	}
+	if !hasMatch {
+		return source.SourceRef{}, false, nil
+	}
+	if found.IsZero() {
+		return source.SourceRef{}, false, fmt.Errorf(
+			"%w: pack %q has no recorded remote source; pass the source path or URL explicitly",
+			ErrUsage, packName,
+		)
+	}
+	return found, true, nil
 }
 
 func (c *updateCommand) updateForTarget(
@@ -101,6 +176,7 @@ func (c *updateCommand) updateForTarget(
 	rt *Runtime,
 	factory *DistributionFactory,
 	pack *source.Pack,
+	ref source.SourceRef,
 	target source.Target,
 	scope inventory.Scope,
 	packName string,
@@ -157,6 +233,7 @@ func (c *updateCommand) updateForTarget(
 		return nil
 	}
 	for _, art := range artifacts {
+		art.SourceRef = ref
 		if _, err := installer.Install(ctx, scope, art); err != nil {
 			return fmt.Errorf("update/install %s/%s: %w (re-run to recover)", target, art.Path, err)
 		}

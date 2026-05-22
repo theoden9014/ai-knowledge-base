@@ -98,6 +98,7 @@ func (i *TransactionalInstaller) Install(ctx context.Context, scope Scope, artif
 		SchemaVersion:  LabelSchemaVersion,
 		ArtifactPath:   rel.String(),
 		SourceEntryIDs: append([]string(nil), artifact.SourceEntryIDs...),
+		SourceRef:      artifact.SourceRef,
 	}
 	if err := i.labels.Set(ctx, scope, id, data); err != nil {
 		// Best-effort rollback: remove the artifact we just wrote so the
@@ -111,6 +112,7 @@ func (i *TransactionalInstaller) Install(ctx context.Context, scope Scope, artif
 		Label: Label{Target: i.Target(), Scope: scope},
 		Provenance: Provenance{
 			SourceEntryIDs: append([]string(nil), artifact.SourceEntryIDs...),
+			SourceRef:      artifact.SourceRef,
 		},
 		Artifact: artifact,
 	}, nil
