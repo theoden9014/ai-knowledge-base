@@ -16,7 +16,7 @@ import (
 
 func TestInstaller_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	if got, want := NewInstaller(userRoot, projectRoot, labels).Target(), Target; got != want {
+	if got, want := must(NewInstaller(userRoot, projectRoot, labels)).Target(), Target; got != want {
 		t.Errorf("Target() = %q, want %q", got, want)
 	}
 }
@@ -24,8 +24,8 @@ func TestInstaller_Target(t *testing.T) {
 func TestInstaller_Contract(t *testing.T) {
 	inventorytest.RunInstallerContract(t, func(t *testing.T) inventorytest.InstallerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
-		u := NewUninstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
+		u := must(NewUninstaller(userRoot, projectRoot, labels))
 		return inventorytest.InstallerHarness{
 			Installer:       i,
 			SupportedTarget: Target,
@@ -37,7 +37,7 @@ func TestInstaller_Contract(t *testing.T) {
 
 func TestInstaller_Install_WritesFileAndSidecar(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	a := makeSampleArtifact()
 	got, err := i.Install(context.Background(), inventory.ScopeUser, a)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestInstaller_Install_WritesFileAndSidecar(t *testing.T) {
 
 func TestInstaller_Install_ProjectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTempRootsUserOnly(t)
-	i := NewInstaller(userRoot, "", labels)
+	i := must(NewInstaller(userRoot, "", labels))
 	_, err := i.Install(context.Background(), inventory.ScopeProject, makeSampleArtifact())
 	if !errors.Is(err, ErrProjectRootNotConfigured) {
 		t.Errorf("Install() err = %v, want errors.Is(err, ErrProjectRootNotConfigured)", err)
@@ -84,7 +84,7 @@ func TestInstaller_Install_ProjectRootNotConfigured(t *testing.T) {
 
 func TestInstaller_Install_InvalidArtifactPath(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	tests := []struct {
 		name string
 		path string
@@ -109,7 +109,7 @@ func TestInstaller_Install_InvalidArtifactPath(t *testing.T) {
 
 func TestInstaller_Install_TargetMismatch(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	a := makeSampleArtifact()
 	a.Target = source.Target("other")
 	_, err := i.Install(context.Background(), inventory.ScopeUser, a)
@@ -120,7 +120,7 @@ func TestInstaller_Install_TargetMismatch(t *testing.T) {
 
 func TestInstaller_Install_UnmanagedArtifactExists(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	a := makeSampleArtifact()
 	// Place an existing file that simulates a user-authored file (no sidecar).
 	dest := filepath.Join(userRoot, "skills", "sample", "SKILL.md")
@@ -148,7 +148,7 @@ func TestInstaller_Install_ManagedExistingReturnsAlreadyInstalled(t *testing.T) 
 	// Reinstalling to a path already managed by knit (with a sidecar) returns
 	// ErrAlreadyInstalled, not ErrUnmanagedArtifactExists.
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	a := makeSampleArtifact()
 	if _, err := i.Install(context.Background(), inventory.ScopeUser, a); err != nil {
 		t.Fatalf("first Install err = %v", err)
@@ -167,7 +167,7 @@ func TestInstaller_Install_ManagedExistingReturnsAlreadyInstalled(t *testing.T) 
 func TestInstaller_Install_errorOrdering(t *testing.T) {
 	t.Run("target mismatch precedes invalid scope", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		a := makeSampleArtifact()
 		a.Target = source.Target("__other__")
 		_, err := i.Install(context.Background(), inventory.Scope("__bogus__"), a)
@@ -177,7 +177,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("invalid scope precedes invalid path", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		a := makeSampleArtifact()
 		a.Path = "../escape.md"
 		_, err := i.Install(context.Background(), inventory.Scope("__bogus__"), a)
@@ -187,7 +187,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("project root not configured precedes invalid path", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		i := NewInstaller(userRoot, "", labels)
+		i := must(NewInstaller(userRoot, "", labels))
 		a := makeSampleArtifact()
 		a.Path = "../escape.md"
 		_, err := i.Install(context.Background(), inventory.ScopeProject, a)
@@ -197,7 +197,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("invalid path precedes already-installed", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		// Seed a normal artifact first.
 		if _, err := i.Install(context.Background(), inventory.ScopeUser, makeSampleArtifact()); err != nil {
 			t.Fatalf("seed Install error: %v", err)
@@ -214,7 +214,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 		// from knit), a repeated Install must prefer ErrAlreadyInstalled over
 		// ErrUnmanagedArtifactExists.
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		a := makeSampleArtifact()
 		if _, err := i.Install(context.Background(), inventory.ScopeUser, a); err != nil {
 			t.Fatalf("seed Install error: %v", err)

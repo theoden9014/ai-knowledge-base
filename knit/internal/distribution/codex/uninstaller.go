@@ -9,27 +9,24 @@ import (
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
-// Uninstaller is the Codex CLI implementation of inventory.Uninstaller.
 type Uninstaller struct {
 	core *inventory.TransactionalUninstaller
 }
 
-// NewUninstaller constructs an Uninstaller. The argument contract matches
-// [NewInstaller].
-func NewUninstaller(userRoot, projectRoot string, labels inventory.LabelStore) *Uninstaller {
-	resolver, _ := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalUninstaller(store, labels, resolver)
+func NewUninstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Uninstaller, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		panic(fmt.Errorf("codex: construct uninstaller: %w", err))
+		return nil, err
 	}
-	return &Uninstaller{core: core}
+	core, err := inventory.NewTransactionalUninstaller(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("codex: construct uninstaller: %w", err)
+	}
+	return &Uninstaller{core: core}, nil
 }
 
-// Target returns the distribution target handled by this Uninstaller.
 func (u *Uninstaller) Target() source.Target { return Target }
 
-// Uninstall delegates to the shared transactional uninstaller.
 func (u *Uninstaller) Uninstall(ctx context.Context, installation inventory.Installation) error {
 	if err := u.core.Uninstall(ctx, installation); err != nil {
 		return translateUninstallError(err, installation.Artifact.Path)

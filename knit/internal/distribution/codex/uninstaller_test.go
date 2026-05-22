@@ -14,7 +14,7 @@ import (
 
 func TestUninstaller_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	if got, want := NewUninstaller(userRoot, projectRoot, labels).Target(), Target; got != want {
+	if got, want := must(NewUninstaller(userRoot, projectRoot, labels)).Target(), Target; got != want {
 		t.Errorf("Target() = %q, want %q", got, want)
 	}
 }
@@ -22,8 +22,8 @@ func TestUninstaller_Target(t *testing.T) {
 func TestUninstaller_Contract(t *testing.T) {
 	inventorytest.RunUninstallerContract(t, func(t *testing.T) inventorytest.UninstallerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
-		u := NewUninstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
+		u := must(NewUninstaller(userRoot, projectRoot, labels))
 		return inventorytest.UninstallerHarness{
 			Uninstaller:     u,
 			SupportedTarget: Target,
@@ -49,8 +49,8 @@ func TestUninstaller_Contract(t *testing.T) {
 
 func TestUninstaller_Uninstall_RemovesFileAndSidecarAndEmptyDir(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
-	u := NewUninstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
+	u := must(NewUninstaller(userRoot, projectRoot, labels))
 	got := seedInstall(t, i, inventory.ScopeUser, "skills/x/SKILL.md")
 
 	if err := u.Uninstall(context.Background(), got); err != nil {
@@ -77,8 +77,8 @@ func TestUninstaller_Uninstall_RemovesFileAndSidecarAndEmptyDir(t *testing.T) {
 
 func TestUninstaller_Uninstall_DoesNotRemoveDirIfOtherFilesRemain(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
-	u := NewUninstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
+	u := must(NewUninstaller(userRoot, projectRoot, labels))
 	got := seedInstall(t, i, inventory.ScopeUser, "skills/x/SKILL.md")
 
 	// Put a non-knit-managed file in the parent directory.
@@ -97,7 +97,7 @@ func TestUninstaller_Uninstall_DoesNotRemoveDirIfOtherFilesRemain(t *testing.T) 
 
 func TestUninstaller_Uninstall_ProjectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTempRootsUserOnly(t)
-	u := NewUninstaller(userRoot, "", labels)
+	u := must(NewUninstaller(userRoot, "", labels))
 	inst := inventory.Installation{
 		ID: inventory.InstallationID("AGENTS.md"),
 		Label: inventory.Label{

@@ -18,14 +18,16 @@ type Lister struct {
 
 // NewLister constructs a Lister. The argument contract matches
 // [NewInstaller].
-func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) *Lister {
-	resolver, _ := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalLister(store, labels, resolver)
+func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) (*Lister, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		panic(fmt.Errorf("claude: construct lister: %w", err))
+		return nil, err
 	}
-	return &Lister{core: core}
+	core, err := inventory.NewTransactionalLister(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("claude: construct lister: %w", err)
+	}
+	return &Lister{core: core}, nil
 }
 
 // Target returns the distribution target handled by this Lister.
@@ -44,5 +46,4 @@ func (l *Lister) List(ctx context.Context, scope inventory.Scope) ([]inventory.I
 	return out, nil
 }
 
-// Compile-time interface assertion.
 var _ inventory.Lister = (*Lister)(nil)

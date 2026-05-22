@@ -9,46 +9,35 @@ import (
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
-// Installer is the Claude Code implementation of inventory.Installer.
-//
-// The actual installation transaction lives in inventory.TransactionalInstaller,
-// which handles preflight checks, file writes, label persistence, and
-// rollback uniformly across distribution targets. This wrapper exists to
-// translate Claude-specific sentinels (such as ErrUnmanagedArtifactExists)
-// and to preserve the existing constructor signature so the CLI layer does
-// not need to be touched in lockstep.
+// Installer is the Claude Code implementation of inventory.Installer. The
+// actual install transaction lives in inventory.TransactionalInstaller;
+// this wrapper translates neutral inventory sentinels into the
+// Claude-specific ones the CLI already reacts to.
 type Installer struct {
-	core   *inventory.TransactionalInstaller
-	policy pathPolicy
+	core *inventory.TransactionalInstaller
 }
 
 // NewInstaller constructs an Installer from the user / project Inventory
-// roots and a LabelStore. Empty projectRoot keeps ScopeProject operations
-// returning ErrProjectRootNotConfigured at call time (matching the prior
-// contract).
-//
-// Returns a pointer that always satisfies inventory.Installer. A nil error
-// in this signature would propagate to every distribution-side caller, so
-// the function panics on programmer errors (nil store, malformed roots);
-// the CLI factory layer is responsible for passing valid arguments.
-func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) *Installer {
-	resolver, policy := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalInstaller(store, labels, resolver)
+// roots and a LabelStore. userRoot must be a non-empty absolute path.
+// Empty projectRoot keeps ScopeProject operations returning
+// ErrProjectRootNotConfigured at call time.
+func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Installer, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		// Pre-validated by buildResolver and the CLI factory; treat as
-		// programmer error.
-		panic(fmt.Errorf("claude: construct installer: %w", err))
+		return nil, err
 	}
-	return &Installer{core: core, policy: policy}
+	core, err := inventory.NewTransactionalInstaller(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("claude: construct installer: %w", err)
+	}
+	return &Installer{core: core}, nil
 }
 
 // Target returns the distribution target handled by this Installer.
 func (i *Installer) Target() source.Target { return Target }
 
 // Install delegates to the shared transactional installer and remaps the
-// neutral inventory sentinels to the Claude-specific ones the CLI already
-// reacts to.
+// neutral inventory sentinels to the Claude-specific ones.
 func (i *Installer) Install(ctx context.Context, scope inventory.Scope, artifact source.Artifact) (inventory.Installation, error) {
 	installed, err := i.core.Install(ctx, scope, artifact)
 	if err != nil {
@@ -72,5 +61,4 @@ func translateInstallError(err error, artifactPath string) error {
 	}
 }
 
-// Compile-time interface assertion.
 var _ inventory.Installer = (*Installer)(nil)

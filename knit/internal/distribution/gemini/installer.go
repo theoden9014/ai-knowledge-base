@@ -9,30 +9,24 @@ import (
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
-// Installer is the Gemini CLI implementation of inventory.Installer.
-// Installation logic is delegated to inventory.TransactionalInstaller; this
-// wrapper preserves the existing constructor signature and translates
-// neutral sentinels into the Gemini-specific ones the CLI already reacts
-// to.
 type Installer struct {
 	core *inventory.TransactionalInstaller
 }
 
-// NewInstaller constructs an Installer.
-func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) *Installer {
-	resolver, _ := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalInstaller(store, labels, resolver)
+func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Installer, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		panic(fmt.Errorf("gemini: construct installer: %w", err))
+		return nil, err
 	}
-	return &Installer{core: core}
+	core, err := inventory.NewTransactionalInstaller(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("gemini: construct installer: %w", err)
+	}
+	return &Installer{core: core}, nil
 }
 
-// Target returns the distribution target handled by this Installer.
 func (i *Installer) Target() source.Target { return Target }
 
-// Install delegates to the shared transactional installer.
 func (i *Installer) Install(ctx context.Context, scope inventory.Scope, artifact source.Artifact) (inventory.Installation, error) {
 	installed, err := i.core.Install(ctx, scope, artifact)
 	if err != nil {

@@ -9,27 +9,24 @@ import (
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
-// Lister is the Codex CLI implementation of inventory.Lister.
 type Lister struct {
 	core *inventory.TransactionalLister
 }
 
-// NewLister constructs a Lister. The argument contract matches
-// [NewInstaller].
-func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) *Lister {
-	resolver, _ := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalLister(store, labels, resolver)
+func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) (*Lister, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		panic(fmt.Errorf("codex: construct lister: %w", err))
+		return nil, err
 	}
-	return &Lister{core: core}
+	core, err := inventory.NewTransactionalLister(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("codex: construct lister: %w", err)
+	}
+	return &Lister{core: core}, nil
 }
 
-// Target returns the distribution target handled by this Lister.
 func (l *Lister) Target() source.Target { return Target }
 
-// List delegates to the shared transactional lister.
 func (l *Lister) List(ctx context.Context, scope inventory.Scope) ([]inventory.Installation, error) {
 	out, err := l.core.List(ctx, scope)
 	if err != nil {

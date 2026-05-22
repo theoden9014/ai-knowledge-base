@@ -59,8 +59,8 @@ func sampleSkillArtifact() source.Artifact {
 func TestInstaller_Contract(t *testing.T) {
 	inventorytest.RunInstallerContract(t, func(t *testing.T) inventorytest.InstallerHarness {
 		userRoot, projectRoot, labels := newTestRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		un := NewUninstaller(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		un := must(NewUninstaller(userRoot, projectRoot, labels))
 		return inventorytest.InstallerHarness{
 			Installer:       ins,
 			SupportedTarget: Target,
@@ -73,8 +73,8 @@ func TestInstaller_Contract(t *testing.T) {
 func TestUninstaller_Contract(t *testing.T) {
 	inventorytest.RunUninstallerContract(t, func(t *testing.T) inventorytest.UninstallerHarness {
 		userRoot, projectRoot, labels := newTestRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		un := NewUninstaller(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		un := must(NewUninstaller(userRoot, projectRoot, labels))
 		return inventorytest.UninstallerHarness{
 			Uninstaller:     un,
 			SupportedTarget: Target,
@@ -102,8 +102,8 @@ func TestUninstaller_Contract(t *testing.T) {
 func TestLister_Contract(t *testing.T) {
 	inventorytest.RunListerContract(t, func(t *testing.T) inventorytest.ListerHarness {
 		userRoot, projectRoot, labels := newTestRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		ls := NewLister(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		ls := must(NewLister(userRoot, projectRoot, labels))
 		return inventorytest.ListerHarness{
 			Lister:          ls,
 			SupportedTarget: Target,
@@ -130,7 +130,7 @@ func TestLister_Contract(t *testing.T) {
 
 func TestInstaller_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
 	if got, want := ins.Target(), Target; got != want {
 		t.Errorf("Installer.Target() = %q, want %q", got, want)
 	}
@@ -138,7 +138,7 @@ func TestInstaller_Target(t *testing.T) {
 
 func TestUninstaller_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	un := NewUninstaller(userRoot, projectRoot, labels)
+	un := must(NewUninstaller(userRoot, projectRoot, labels))
 	if got, want := un.Target(), Target; got != want {
 		t.Errorf("Uninstaller.Target() = %q, want %q", got, want)
 	}
@@ -146,7 +146,7 @@ func TestUninstaller_Target(t *testing.T) {
 
 func TestLister_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ls := NewLister(userRoot, projectRoot, labels)
+	ls := must(NewLister(userRoot, projectRoot, labels))
 	if got, want := ls.Target(), Target; got != want {
 		t.Errorf("Lister.Target() = %q, want %q", got, want)
 	}
@@ -154,7 +154,7 @@ func TestLister_Target(t *testing.T) {
 
 func TestInstaller_Install_writesContent(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
 	art := sampleSkillArtifact()
 	inst, err := ins.Install(context.Background(), inventory.ScopeUser, art)
 	if err != nil {
@@ -187,7 +187,7 @@ func TestInstaller_Install_writesContent(t *testing.T) {
 
 func TestInstaller_Install_projectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTestRootsUserOnly(t)
-	ins := NewInstaller(userRoot, "", labels)
+	ins := must(NewInstaller(userRoot, "", labels))
 	_, err := ins.Install(context.Background(), inventory.ScopeProject, sampleSkillArtifact())
 	if !errors.Is(err, ErrProjectRootNotConfigured) {
 		t.Errorf("Install(ScopeProject) err = %v, want ErrProjectRootNotConfigured", err)
@@ -196,7 +196,7 @@ func TestInstaller_Install_projectRootNotConfigured(t *testing.T) {
 
 func TestInstaller_Install_invalidArtifactPath(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
 	art := source.Artifact{
 		Target:  Target,
 		Path:    "hooks/foo.md",
@@ -210,7 +210,7 @@ func TestInstaller_Install_invalidArtifactPath(t *testing.T) {
 
 func TestInstaller_Install_unmanagedArtifactExists(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
 	target := filepath.Join(userRoot, "skills/sample/SKILL.md")
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
@@ -226,7 +226,7 @@ func TestInstaller_Install_unmanagedArtifactExists(t *testing.T) {
 
 func TestUninstaller_Uninstall_projectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTestRootsUserOnly(t)
-	un := NewUninstaller(userRoot, "", labels)
+	un := must(NewUninstaller(userRoot, "", labels))
 	inst := inventory.Installation{
 		ID: inventory.InstallationID("skills/x/SKILL.md"),
 		Label: inventory.Label{
@@ -242,7 +242,7 @@ func TestUninstaller_Uninstall_projectRootNotConfigured(t *testing.T) {
 
 func TestLister_List_projectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTestRootsUserOnly(t)
-	ls := NewLister(userRoot, "", labels)
+	ls := must(NewLister(userRoot, "", labels))
 	_, err := ls.List(context.Background(), inventory.ScopeProject)
 	if !errors.Is(err, ErrProjectRootNotConfigured) {
 		t.Errorf("List(ScopeProject) err = %v, want ErrProjectRootNotConfigured", err)
@@ -252,8 +252,8 @@ func TestLister_List_projectRootNotConfigured(t *testing.T) {
 func TestLister_List_excludesOrphanLabel(t *testing.T) {
 	// A label whose artifact file is missing must be excluded from List.
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
-	ls := NewLister(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
+	ls := must(NewLister(userRoot, projectRoot, labels))
 	inst, err := ins.Install(context.Background(), inventory.ScopeUser, sampleSkillArtifact())
 	if err != nil {
 		t.Fatalf("Install: %v", err)
@@ -272,9 +272,9 @@ func TestLister_List_excludesOrphanLabel(t *testing.T) {
 
 func TestRoundtrip_Install_List_Uninstall(t *testing.T) {
 	userRoot, projectRoot, labels := newTestRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
-	ls := NewLister(userRoot, projectRoot, labels)
-	un := NewUninstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
+	ls := must(NewLister(userRoot, projectRoot, labels))
+	un := must(NewUninstaller(userRoot, projectRoot, labels))
 	ctx := context.Background()
 
 	art := sampleSkillArtifact()

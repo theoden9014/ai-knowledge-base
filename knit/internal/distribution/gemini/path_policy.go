@@ -45,27 +45,28 @@ func (pathPolicy) Validate(p source.ArtifactPath) error {
 var _ inventory.PathPolicy = pathPolicy{}
 
 // buildResolver wires the Gemini PathPolicy with the user / project
-// Inventory roots and returns a PathResolver.
-func buildResolver(userRoot, projectRoot string) (*inventory.PathResolver, pathPolicy) {
-	policy := newPathPolicy()
+// Inventory roots and returns a PathResolver. userRoot must be a
+// non-empty absolute path; empty projectRoot keeps ScopeProject
+// operations returning ErrProjectRootNotConfigured at call time.
+func buildResolver(userRoot, projectRoot string) (*inventory.PathResolver, error) {
 	uRoot, err := inventory.NewInventoryRoot(userRoot)
 	if err != nil {
-		panic(fmt.Errorf("gemini: invalid user root %q: %w", userRoot, err))
+		return nil, fmt.Errorf("gemini: invalid user root %q: %w", userRoot, err)
 	}
 	var pRoot inventory.InventoryRoot
 	if projectRoot != "" {
 		pRoot, err = inventory.NewInventoryRoot(projectRoot)
 		if err != nil {
-			panic(fmt.Errorf("gemini: invalid project root %q: %w", projectRoot, err))
+			return nil, fmt.Errorf("gemini: invalid project root %q: %w", projectRoot, err)
 		}
 	}
 	roots, err := inventory.NewInventoryRoots(uRoot, pRoot)
 	if err != nil {
-		panic(fmt.Errorf("gemini: invalid inventory roots: %w", err))
+		return nil, fmt.Errorf("gemini: invalid inventory roots: %w", err)
 	}
-	resolver, err := inventory.NewPathResolver(policy, roots)
+	resolver, err := inventory.NewPathResolver(newPathPolicy(), roots)
 	if err != nil {
-		panic(fmt.Errorf("gemini: build path resolver: %w", err))
+		return nil, fmt.Errorf("gemini: build path resolver: %w", err)
 	}
-	return resolver, policy
+	return resolver, nil
 }

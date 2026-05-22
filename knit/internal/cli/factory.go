@@ -121,11 +121,11 @@ func (f *DistributionFactory) Builder(target source.Target) (source.Builder, err
 func (f *DistributionFactory) Installer(target source.Target) (inventory.Installer, error) {
 	switch target {
 	case claude.Target:
-		return claude.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return claude.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case codex.Target:
-		return codex.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return codex.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case gemini.Target:
-		return gemini.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return gemini.NewInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	default:
 		return nil, fmt.Errorf("%w: target=%q", ErrInvalidFlagValue, target)
 	}
@@ -136,11 +136,11 @@ func (f *DistributionFactory) Installer(target source.Target) (inventory.Install
 func (f *DistributionFactory) Uninstaller(target source.Target) (inventory.Uninstaller, error) {
 	switch target {
 	case claude.Target:
-		return claude.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return claude.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case codex.Target:
-		return codex.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return codex.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case gemini.Target:
-		return gemini.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return gemini.NewUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	default:
 		return nil, fmt.Errorf("%w: target=%q", ErrInvalidFlagValue, target)
 	}
@@ -151,11 +151,11 @@ func (f *DistributionFactory) Uninstaller(target source.Target) (inventory.Unins
 func (f *DistributionFactory) Lister(target source.Target) (inventory.Lister, error) {
 	switch target {
 	case claude.Target:
-		return claude.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return claude.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case codex.Target:
-		return codex.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return codex.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	case gemini.Target:
-		return gemini.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target)), nil
+		return gemini.NewLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
 	default:
 		return nil, fmt.Errorf("%w: target=%q", ErrInvalidFlagValue, target)
 	}

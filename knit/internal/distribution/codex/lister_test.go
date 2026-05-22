@@ -14,7 +14,7 @@ import (
 
 func TestLister_Target(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	if got, want := NewLister(userRoot, projectRoot, labels).Target(), Target; got != want {
+	if got, want := must(NewLister(userRoot, projectRoot, labels)).Target(), Target; got != want {
 		t.Errorf("Target() = %q, want %q", got, want)
 	}
 }
@@ -22,8 +22,8 @@ func TestLister_Target(t *testing.T) {
 func TestLister_Contract(t *testing.T) {
 	inventorytest.RunListerContract(t, func(t *testing.T) inventorytest.ListerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
-		l := NewLister(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
+		l := must(NewLister(userRoot, projectRoot, labels))
 		return inventorytest.ListerHarness{
 			Lister:          l,
 			SupportedTarget: Target,
@@ -41,7 +41,7 @@ func TestLister_Contract(t *testing.T) {
 
 func TestLister_List_EmptyReturnsNilOrEmptySlice(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	l := NewLister(userRoot, projectRoot, labels)
+	l := must(NewLister(userRoot, projectRoot, labels))
 	got, err := l.List(context.Background(), inventory.ScopeUser)
 	if err != nil {
 		t.Fatalf("List() on empty Inventory err = %v, want nil", err)
@@ -53,8 +53,8 @@ func TestLister_List_EmptyReturnsNilOrEmptySlice(t *testing.T) {
 
 func TestLister_List_ExcludesOrphanedSidecar(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
-	l := NewLister(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
+	l := must(NewLister(userRoot, projectRoot, labels))
 	inst := seedInstall(t, i, inventory.ScopeUser, "skills/orphan/SKILL.md")
 	// Remove only the artifact file and keep the sidecar.
 	if err := os.Remove(filepath.Join(userRoot, "skills", "orphan", "SKILL.md")); err != nil {
@@ -73,7 +73,7 @@ func TestLister_List_ExcludesOrphanedSidecar(t *testing.T) {
 
 func TestLister_List_ProjectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTempRootsUserOnly(t)
-	l := NewLister(userRoot, "", labels)
+	l := must(NewLister(userRoot, "", labels))
 	_, err := l.List(context.Background(), inventory.ScopeProject)
 	if !errors.Is(err, ErrProjectRootNotConfigured) {
 		t.Errorf("List() err = %v, want ErrProjectRootNotConfigured", err)

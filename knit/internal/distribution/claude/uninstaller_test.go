@@ -17,8 +17,8 @@ import (
 func TestUninstaller_Contract(t *testing.T) {
 	inventorytest.RunUninstallerContract(t, func(t *testing.T) inventorytest.UninstallerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		uns := NewUninstaller(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		uns := must(NewUninstaller(userRoot, projectRoot, labels))
 
 		seed := func(t *testing.T, scope inventory.Scope) inventory.Installation {
 			t.Helper()
@@ -61,7 +61,7 @@ func TestUninstaller_Contract(t *testing.T) {
 
 func TestUninstaller_Target(t *testing.T) {
 	labels := inventory.NewSidecarLabelStore(Target, "/u/.knit/labels", "")
-	uns := NewUninstaller("/u/.claude", "/p/.claude", labels)
+	uns := must(NewUninstaller("/u/.claude", "/p/.claude", labels))
 	if got := uns.Target(); got != Target {
 		t.Errorf("Uninstaller.Target() = %v, want %v", got, Target)
 	}
@@ -71,8 +71,8 @@ func TestUninstaller_Target(t *testing.T) {
 // path removes both the artifact file and the label record.
 func TestUninstaller_Uninstall_removesArtifactAndLabel(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
-	uns := NewUninstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
+	uns := must(NewUninstaller(userRoot, projectRoot, labels))
 
 	inst, err := ins.Install(context.Background(), inventory.ScopeUser, sampleSkillArtifact())
 	if err != nil {
@@ -95,8 +95,8 @@ func TestUninstaller_Uninstall_removesArtifactAndLabel(t *testing.T) {
 // (idempotence is the caller's responsibility).
 func TestUninstaller_Uninstall_isNotIdempotentByItself(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
-	uns := NewUninstaller(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
+	uns := must(NewUninstaller(userRoot, projectRoot, labels))
 
 	inst, err := ins.Install(context.Background(), inventory.ScopeUser, sampleSkillArtifact())
 	if err != nil {
@@ -118,7 +118,7 @@ func TestUninstaller_Uninstall_isNotIdempotentByItself(t *testing.T) {
 func TestUninstaller_Uninstall_errorOrdering(t *testing.T) {
 	t.Run("target mismatch precedes invalid scope", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		uns := NewUninstaller(userRoot, projectRoot, labels)
+		uns := must(NewUninstaller(userRoot, projectRoot, labels))
 		inst := inventory.Installation{
 			Label:    inventory.Label{Target: source.Target("__other__"), Scope: inventory.Scope("__bogus__")},
 			Artifact: source.Artifact{Target: Target, Path: "skills/x/SKILL.md"},
@@ -130,7 +130,7 @@ func TestUninstaller_Uninstall_errorOrdering(t *testing.T) {
 	})
 	t.Run("invalid scope precedes project root not configured", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		uns := NewUninstaller(userRoot, "", labels)
+		uns := must(NewUninstaller(userRoot, "", labels))
 		inst := inventory.Installation{
 			Label:    inventory.Label{Target: Target, Scope: inventory.Scope("__bogus__")},
 			Artifact: source.Artifact{Target: Target, Path: "skills/x/SKILL.md"},
@@ -142,7 +142,7 @@ func TestUninstaller_Uninstall_errorOrdering(t *testing.T) {
 	})
 	t.Run("project root not configured precedes installation not found", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		uns := NewUninstaller(userRoot, "", labels)
+		uns := must(NewUninstaller(userRoot, "", labels))
 		inst := inventory.Installation{
 			Label:    inventory.Label{Target: Target, Scope: inventory.ScopeProject},
 			Artifact: source.Artifact{Target: Target, Path: "skills/x/SKILL.md"},

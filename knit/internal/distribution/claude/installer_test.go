@@ -61,8 +61,8 @@ func sampleSkillArtifact() source.Artifact {
 func TestInstaller_Contract(t *testing.T) {
 	inventorytest.RunInstallerContract(t, func(t *testing.T) inventorytest.InstallerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		uns := NewUninstaller(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		uns := must(NewUninstaller(userRoot, projectRoot, labels))
 		return inventorytest.InstallerHarness{
 			Installer:       ins,
 			SupportedTarget: Target,
@@ -84,7 +84,7 @@ func TestNewInstaller(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			labels := inventory.NewSidecarLabelStore(Target, "/u/.knit/labels", "")
-			got := NewInstaller(tt.userRoot, tt.projectRoot, labels)
+			got := must(NewInstaller(tt.userRoot, tt.projectRoot, labels))
 			if got == nil {
 				t.Fatal("NewInstaller() returned nil")
 			}
@@ -97,7 +97,7 @@ func TestNewInstaller(t *testing.T) {
 
 func TestInstaller_Target(t *testing.T) {
 	labels := inventory.NewSidecarLabelStore(Target, "/u/.knit/labels", "")
-	i := NewInstaller("/u/.claude", "/p/.claude", labels)
+	i := must(NewInstaller("/u/.claude", "/p/.claude", labels))
 	if got := i.Target(); !cmp.Equal(Target, got) {
 		t.Errorf("Installer.Target() = %v, want %v", got, Target)
 	}
@@ -110,7 +110,7 @@ func TestInstaller_Target(t *testing.T) {
 func TestInstaller_Install_errorOrdering(t *testing.T) {
 	t.Run("target mismatch precedes invalid scope", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		art := sampleSkillArtifact()
 		art.Target = source.Target("__other__")
 		_, err := i.Install(context.Background(), inventory.Scope("__bogus__"), art)
@@ -120,7 +120,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("invalid scope precedes invalid path", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		art := sampleSkillArtifact()
 		art.Path = "../escape.md"
 		_, err := i.Install(context.Background(), inventory.Scope("__bogus__"), art)
@@ -130,7 +130,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("project root not configured precedes invalid path", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		i := NewInstaller(userRoot, "", labels)
+		i := must(NewInstaller(userRoot, "", labels))
 		art := sampleSkillArtifact()
 		art.Path = "../escape.md"
 		_, err := i.Install(context.Background(), inventory.ScopeProject, art)
@@ -140,7 +140,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 	})
 	t.Run("invalid path precedes already-installed", func(t *testing.T) {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		i := NewInstaller(userRoot, projectRoot, labels)
+		i := must(NewInstaller(userRoot, projectRoot, labels))
 		if _, err := i.Install(context.Background(), inventory.ScopeUser, sampleSkillArtifact()); err != nil {
 			t.Fatalf("seed Install error: %v", err)
 		}
@@ -157,7 +157,7 @@ func TestInstaller_Install_errorOrdering(t *testing.T) {
 // ErrUnmanagedArtifactExists is returned when an artifact exists without a label.
 func TestInstaller_Install_unmanagedArtifactExists(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	art := sampleSkillArtifact()
 
 	absArtifact := filepath.Join(userRoot, art.Path)
@@ -184,7 +184,7 @@ func TestInstaller_Install_unmanagedArtifactExists(t *testing.T) {
 // writes both the label and the artifact file.
 func TestInstaller_Install_writesLabelAndArtifact(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	i := NewInstaller(userRoot, projectRoot, labels)
+	i := must(NewInstaller(userRoot, projectRoot, labels))
 	art := sampleSkillArtifact()
 	wantSourceEntryIDs := []string{"p.skill.sample"}
 

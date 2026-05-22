@@ -17,8 +17,8 @@ import (
 func TestLister_Contract(t *testing.T) {
 	inventorytest.RunListerContract(t, func(t *testing.T) inventorytest.ListerHarness {
 		userRoot, projectRoot, labels := newTempRoots(t)
-		ins := NewInstaller(userRoot, projectRoot, labels)
-		lst := NewLister(userRoot, projectRoot, labels)
+		ins := must(NewInstaller(userRoot, projectRoot, labels))
+		lst := must(NewLister(userRoot, projectRoot, labels))
 		seed := func(t *testing.T, scope inventory.Scope, n int) []inventory.Installation {
 			t.Helper()
 			result := make([]inventory.Installation, 0, n)
@@ -44,7 +44,7 @@ func TestLister_Contract(t *testing.T) {
 
 func TestLister_Target(t *testing.T) {
 	labels := inventory.NewSidecarLabelStore(Target, "/u/.knit/labels", "")
-	lst := NewLister("/u/.claude", "/p/.claude", labels)
+	lst := must(NewLister("/u/.claude", "/p/.claude", labels))
 	if got := lst.Target(); got != Target {
 		t.Errorf("Lister.Target() = %v, want %v", got, Target)
 	}
@@ -54,7 +54,7 @@ func TestLister_Target(t *testing.T) {
 // returned when nothing has been installed.
 func TestLister_List_returnsEmptyWhenLabelsAbsent(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	lst := NewLister(userRoot, projectRoot, labels)
+	lst := must(NewLister(userRoot, projectRoot, labels))
 	got, err := lst.List(context.Background(), inventory.ScopeUser)
 	if err != nil {
 		t.Fatalf("List() error = %v", err)
@@ -68,9 +68,9 @@ func TestLister_List_returnsEmptyWhenLabelsAbsent(t *testing.T) {
 // corresponding artifact file (a leftover) is excluded from results.
 func TestLister_List_excludesOrphanLabel(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	ins := NewInstaller(userRoot, projectRoot, labels)
-	uns := NewUninstaller(userRoot, projectRoot, labels)
-	lst := NewLister(userRoot, projectRoot, labels)
+	ins := must(NewInstaller(userRoot, projectRoot, labels))
+	uns := must(NewUninstaller(userRoot, projectRoot, labels))
+	lst := must(NewLister(userRoot, projectRoot, labels))
 
 	a1 := sampleSkillArtifact()
 	a1.Path = "skills/p-a/SKILL.md"
@@ -108,7 +108,7 @@ func TestLister_List_excludesOrphanLabel(t *testing.T) {
 // managed by knit and lacking a label is not included in results.
 func TestLister_List_excludesUnmanagedFile(t *testing.T) {
 	userRoot, projectRoot, labels := newTempRoots(t)
-	lst := NewLister(userRoot, projectRoot, labels)
+	lst := must(NewLister(userRoot, projectRoot, labels))
 	abs := filepath.Join(userRoot, "skills", "manual", "SKILL.md")
 	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
@@ -131,7 +131,7 @@ func TestLister_List_excludesUnmanagedFile(t *testing.T) {
 func TestLister_List_errorOrdering(t *testing.T) {
 	t.Run("invalid scope precedes project root not configured", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		lst := NewLister(userRoot, "", labels)
+		lst := must(NewLister(userRoot, "", labels))
 		_, err := lst.List(context.Background(), inventory.Scope("__bogus__"))
 		if !errors.Is(err, inventory.ErrInvalidScope) {
 			t.Errorf("err = %v, want ErrInvalidScope", err)
@@ -139,7 +139,7 @@ func TestLister_List_errorOrdering(t *testing.T) {
 	})
 	t.Run("project root not configured for ScopeProject", func(t *testing.T) {
 		userRoot, labels := newTempRootsUserOnly(t)
-		lst := NewLister(userRoot, "", labels)
+		lst := must(NewLister(userRoot, "", labels))
 		_, err := lst.List(context.Background(), inventory.ScopeProject)
 		if !errors.Is(err, ErrProjectRootNotConfigured) {
 			t.Errorf("err = %v, want ErrProjectRootNotConfigured", err)

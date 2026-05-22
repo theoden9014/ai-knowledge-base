@@ -53,30 +53,30 @@ func (pathPolicy) Validate(p source.ArtifactPath) error {
 var _ inventory.PathPolicy = pathPolicy{}
 
 // buildResolver assembles a PathResolver for Claude from the user and
-// project Inventory root strings. Empty userRoot is rejected as a
-// programmer error (the CLI factory is responsible for resolving it);
-// empty projectRoot keeps ScopeProject operations returning
-// ErrProjectRootNotConfigured at call time.
-func buildResolver(userRoot, projectRoot string) (*inventory.PathResolver, pathPolicy) {
-	policy := newPathPolicy()
+// project Inventory root strings. userRoot must be a non-empty absolute
+// path; empty projectRoot keeps ScopeProject operations returning
+// ErrProjectRootNotConfigured at call time. Validation failures are
+// returned as errors so the CLI layer can surface them instead of
+// panicking deep inside a constructor.
+func buildResolver(userRoot, projectRoot string) (*inventory.PathResolver, error) {
 	uRoot, err := inventory.NewInventoryRoot(userRoot)
 	if err != nil {
-		panic(fmt.Errorf("claude: invalid user root %q: %w", userRoot, err))
+		return nil, fmt.Errorf("claude: invalid user root %q: %w", userRoot, err)
 	}
 	var pRoot inventory.InventoryRoot
 	if projectRoot != "" {
 		pRoot, err = inventory.NewInventoryRoot(projectRoot)
 		if err != nil {
-			panic(fmt.Errorf("claude: invalid project root %q: %w", projectRoot, err))
+			return nil, fmt.Errorf("claude: invalid project root %q: %w", projectRoot, err)
 		}
 	}
 	roots, err := inventory.NewInventoryRoots(uRoot, pRoot)
 	if err != nil {
-		panic(fmt.Errorf("claude: invalid inventory roots: %w", err))
+		return nil, fmt.Errorf("claude: invalid inventory roots: %w", err)
 	}
-	resolver, err := inventory.NewPathResolver(policy, roots)
+	resolver, err := inventory.NewPathResolver(newPathPolicy(), roots)
 	if err != nil {
-		panic(fmt.Errorf("claude: build path resolver: %w", err))
+		return nil, fmt.Errorf("claude: build path resolver: %w", err)
 	}
-	return resolver, policy
+	return resolver, nil
 }

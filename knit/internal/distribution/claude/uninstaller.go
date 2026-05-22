@@ -18,16 +18,19 @@ type Uninstaller struct {
 }
 
 // NewUninstaller constructs an Uninstaller. The argument contract matches
-// [NewInstaller]: empty projectRoot keeps ScopeProject operations returning
+// [NewInstaller]: userRoot must be a non-empty absolute path, and empty
+// projectRoot keeps ScopeProject operations returning
 // ErrProjectRootNotConfigured at call time.
-func NewUninstaller(userRoot, projectRoot string, labels inventory.LabelStore) *Uninstaller {
-	resolver, _ := buildResolver(userRoot, projectRoot)
-	store := inventory.NewFsArtifactStore()
-	core, err := inventory.NewTransactionalUninstaller(store, labels, resolver)
+func NewUninstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Uninstaller, error) {
+	resolver, err := buildResolver(userRoot, projectRoot)
 	if err != nil {
-		panic(fmt.Errorf("claude: construct uninstaller: %w", err))
+		return nil, err
 	}
-	return &Uninstaller{core: core}
+	core, err := inventory.NewTransactionalUninstaller(inventory.NewFsArtifactStore(), labels, resolver)
+	if err != nil {
+		return nil, fmt.Errorf("claude: construct uninstaller: %w", err)
+	}
+	return &Uninstaller{core: core}, nil
 }
 
 // Target returns the distribution target handled by this Uninstaller.
@@ -56,5 +59,4 @@ func translateUninstallError(err error, artifactPath string) error {
 	}
 }
 
-// Compile-time interface assertion.
 var _ inventory.Uninstaller = (*Uninstaller)(nil)
