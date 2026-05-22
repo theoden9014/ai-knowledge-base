@@ -218,17 +218,22 @@ type resolvedPack struct {
 	Cleanup func() error
 }
 
+// argResolver loads a single resolvedPack for one ArgKind. The shared
+// loadPackFromArg dispatcher chooses the right resolver from packResolvers.
+type argResolver func(ctx context.Context, rt *Runtime, t TriagedArg) (*resolvedPack, error)
+
+// packResolvers maps ArgKind to its resolver. Adding a new ArgKind is
+// one entry plus a resolver function below.
+var packResolvers = map[ArgKind]argResolver{
+	ArgKindRemoteURL: resolveRemoteURLArg,
+	ArgKindLocalPath: resolveLocalPathArg,
+	ArgKindPackName:  resolvePackNameArg,
+}
+
 // loadPackFromArg is the unified entry point used by install / update /
 // build for the <pack-or-path-or-url> positional argument. Triage is
-// delegated to [TriageArg]; this function dispatches each [ArgKind] to
-// the corresponding loader.
-//
-// Before dispatching, it applies one extra disambiguation guard:
-// arguments that classify as PackName but still contain a "." (the
-// "foo.bar" shape — a single host token without the "/owner/repo"
-// suffix) are rejected with [ErrUsage]. Without this guard such inputs
-// would fall through to the pack-name loader and produce a confusing
-// "manifest not found" error from the loader.
+// delegated to [TriageArg]; this function applies an ambiguity guard and
+// then forwards to the [argResolver] registered for the resulting kind.
 //
 // Error handling per Kind:
 //   - ArgKindRemoteURL : remote.Parse / remote.Dispatch errors surface
@@ -238,8 +243,9 @@ type resolvedPack struct {
 //   - ArgKindPackName  : when knowledge/ cannot be auto-detected,
 //     returns [ErrKnowledgeDirNotFound].
 //
-// The cleanup function is always returned non-nil (the local paths return
-// a no-op closure) so callers can defer it unconditionally.
+// The cleanup function in the returned resolvedPack is always non-nil
+// (local paths return a no-op closure) so callers can defer it
+// unconditionally.
 func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPack, error) {
 	t := TriageArg(arg)
 
@@ -254,79 +260,100 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 		)
 	}
 
-	switch t.Kind {
-	case ArgKindRemoteURL:
-		loc, err := remote.Parse(t.Cleaned)
-		if err != nil {
-			return nil, err
-		}
-		fetched, err := remote.Dispatch(ctx, loc, rt.Fetchers)
-		if err != nil {
-			return nil, err
-		}
-		pack, err := loadPackFromFS(ctx, fetched.FS(), fetched.PackDir())
-		if err != nil {
-			_ = fetched.Close()
-			return nil, err
-		}
-		return &resolvedPack{
-			Pack:    pack,
-			Name:    pack.Name,
-			Source:  source.SourceRef{Kind: source.SourceRefRemoteURL, Value: t.Cleaned},
-			Cleanup: fetched.Close,
-		}, nil
-	case ArgKindLocalPath:
-		pack, err := loadPackFromLocalDir(ctx, rt, t.Cleaned)
-		if err != nil {
-			return nil, err
-		}
-		abs, err := canonicalLocalDirPath(rt, t.Cleaned)
-		if err != nil {
-			return nil, err
-		}
-		return &resolvedPack{
-			Pack:    pack,
-			Name:    pack.Name,
-			Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: abs},
-			Cleanup: func() error { return nil },
-		}, nil
-	case ArgKindPackName:
-		knowledgeDir, err := resolveKnowledgeDir(rt)
-		if err != nil {
-			return nil, err
-		}
-		pack, err := loadPack(ctx, knowledgeDir, t.Cleaned)
-		if err != nil {
-			return nil, err
-		}
-		return &resolvedPack{
-			Pack:    pack,
-			Name:    pack.Name,
-			Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: filepath.Join(knowledgeDir, t.Cleaned)},
-			Cleanup: func() error { return nil },
-		}, nil
-	default:
-		// Unreachable in practice: TriageArg only returns the three Kinds
-		// handled above. Kept as a defense-in-depth so that adding a new
-		// ArgKind without updating this switch produces an actionable
-		// ErrUsage at runtime instead of a silent fallthrough.
+	resolver, ok := packResolvers[t.Kind]
+	if !ok {
+		// Unreachable while TriageArg only returns the registered kinds;
+		// kept so that adding a new ArgKind without updating
+		// packResolvers fails loudly at runtime rather than silently.
 		return nil, fmt.Errorf("%w: unknown ArgKind=%d", ErrUsage, t.Kind)
 	}
+	return resolver(ctx, rt, t)
 }
 
-// writeArtifactToDir writes art under outDir using art.Path as a relative
-// suffix. Parent directories are created with 0o755 and files with 0o644
-// (or art.Mode when non-zero) — mirroring distribution Installer defaults.
+// resolveRemoteURLArg fetches a remote pack and wraps the result in a
+// resolvedPack whose Cleanup closes the fetched FS.
+func resolveRemoteURLArg(ctx context.Context, rt *Runtime, t TriagedArg) (*resolvedPack, error) {
+	loc, err := remote.Parse(t.Cleaned)
+	if err != nil {
+		return nil, err
+	}
+	fetched, err := remote.Dispatch(ctx, loc, rt.Fetchers)
+	if err != nil {
+		return nil, err
+	}
+	pack, err := loadPackFromFS(ctx, fetched.FS(), fetched.PackDir())
+	if err != nil {
+		_ = fetched.Close()
+		return nil, err
+	}
+	return &resolvedPack{
+		Pack:    pack,
+		Name:    pack.Name,
+		Source:  source.SourceRef{Kind: source.SourceRefRemoteURL, Value: t.Cleaned},
+		Cleanup: fetched.Close,
+	}, nil
+}
+
+// resolveLocalPathArg loads a pack from a literal filesystem path.
+func resolveLocalPathArg(ctx context.Context, rt *Runtime, t TriagedArg) (*resolvedPack, error) {
+	pack, err := loadPackFromLocalDir(ctx, rt, t.Cleaned)
+	if err != nil {
+		return nil, err
+	}
+	abs, err := canonicalLocalDirPath(rt, t.Cleaned)
+	if err != nil {
+		return nil, err
+	}
+	return &resolvedPack{
+		Pack:    pack,
+		Name:    pack.Name,
+		Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: abs},
+		Cleanup: func() error { return nil },
+	}, nil
+}
+
+// resolvePackNameArg loads a pack from the auto-detected knowledge/
+// directory.
+func resolvePackNameArg(ctx context.Context, rt *Runtime, t TriagedArg) (*resolvedPack, error) {
+	knowledgeDir, err := resolveKnowledgeDir(rt)
+	if err != nil {
+		return nil, err
+	}
+	pack, err := loadPack(ctx, knowledgeDir, t.Cleaned)
+	if err != nil {
+		return nil, err
+	}
+	return &resolvedPack{
+		Pack:    pack,
+		Name:    pack.Name,
+		Source:  source.SourceRef{Kind: source.SourceRefLocalPath, Value: filepath.Join(knowledgeDir, t.Cleaned)},
+		Cleanup: func() error { return nil },
+	}, nil
+}
+
+// writeArtifactToDir writes art under outDir using art.Path as a
+// relative suffix. The write goes through inventory.FsArtifactStore so
+// build -o follows the same filesystem-I/O abstraction as install. The
+// outDir argument is normalized to an absolute path so the underlying
+// InventoryRoot can accept it.
 func writeArtifactToDir(outDir string, art source.Artifact) error {
-	dst := filepath.Join(outDir, art.Path)
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return fmt.Errorf("cli: mkdir for artifact: %w", err)
+	rel, err := source.NewArtifactPath(art.Path)
+	if err != nil {
+		return fmt.Errorf("cli: validate artifact path: %w", err)
 	}
-	mode := art.Mode
-	if mode == 0 {
-		mode = 0o644
+	abs, err := filepath.Abs(outDir)
+	if err != nil {
+		return fmt.Errorf("cli: resolve out dir %q: %w", outDir, err)
 	}
-	if err := os.WriteFile(dst, art.Content, mode); err != nil {
+	root, err := inventory.NewInventoryRoot(abs)
+	if err != nil {
+		return fmt.Errorf("cli: invalid out dir: %w", err)
+	}
+	dst, err := root.Join(rel)
+	if err != nil {
+		return fmt.Errorf("cli: join artifact path: %w", err)
+	}
+	if err := inventory.NewFsArtifactStore().Write(context.Background(), dst, art.Content, art.Mode); err != nil {
 		return fmt.Errorf("cli: write artifact: %w", err)
 	}
 	return nil
