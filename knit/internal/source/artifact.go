@@ -28,7 +28,8 @@ type Artifact struct {
 	// synthesized without a 1:1 mapping to an entry.
 	SourceEntryIDs []string
 
-	// SourceRef records where the containing Pack was loaded from so update can
-	// refresh by pack name without requiring the user to retype the path or URL.
+	// SourceRef records where the containing Pack was loaded from. The CLI uses
+	// remote references to refresh by pack name and local references to explain
+	// why an explicit path is required.
 	SourceRef SourceRef
 }

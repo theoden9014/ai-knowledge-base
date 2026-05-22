@@ -171,12 +171,6 @@ func (c *updateCommand) remoteSourceForPackName(
 	if !hasMatch {
 		return source.SourceRef{}, false, nil
 	}
-	if found.IsZero() {
-		return source.SourceRef{}, false, fmt.Errorf(
-			"%w: pack %q has no recorded remote source; pass the source path or URL explicitly",
-			ErrUsage, packName,
-		)
-	}
 	return found, true, nil
 }
 

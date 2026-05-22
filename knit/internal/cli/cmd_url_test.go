@@ -117,6 +117,45 @@ func TestUpdateCommand_Run_remoteURL(t *testing.T) {
 	}
 }
 
+func TestUpdateCommand_Run_packNameUsesInstalledRemoteSource(t *testing.T) {
+	f := newCmdFixture(t)
+	rt, _, _ := f.runtime(t)
+	rt.Fetchers = []remote.Fetcher{&stubFetcher{
+		supportsHost: "github.com",
+		files:        remotePackFSWithBody("p", "p", "body v1 from remote\n"),
+		packDir:      "p",
+	}}
+	if err := runCommand(t, NewInstallCommand(), rt, []string{
+		"--scope=user", "--target=claude",
+		"github.com/owner/p",
+	}); err != nil {
+		t.Fatalf("install remote URL err: %v", err)
+	}
+
+	rt2, stdout, _ := f.runtime(t)
+	rt2.Fetchers = []remote.Fetcher{&stubFetcher{
+		supportsHost: "github.com",
+		files:        remotePackFSWithBody("p", "p", "body v2 from remote\n"),
+		packDir:      "p",
+	}}
+	if err := runCommand(t, NewUpdateCommand(), rt2, []string{
+		"--scope=user", "--target=claude",
+		"p",
+	}); err != nil {
+		t.Fatalf("update by pack name err: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "updated") {
+		t.Errorf("stdout missing 'updated': %q", stdout.String())
+	}
+	got, err := os.ReadFile(filepath.Join(f.homeDir, ".claude", "skills", "p-a", "SKILL.md"))
+	if err != nil {
+		t.Fatalf("read installed: %v", err)
+	}
+	if !strings.Contains(string(got), "body v2 from remote") {
+		t.Errorf("installed artifact not refreshed from recorded remote source:\n%s", got)
+	}
+}
+
 // TestBuildCommand_Run_remoteURL verifies that build accepts a remote URL.
 func TestBuildCommand_Run_remoteURL(t *testing.T) {
 	f := newCmdFixture(t)
