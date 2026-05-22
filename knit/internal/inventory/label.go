@@ -27,3 +27,10 @@ type Label struct {
 func (l Label) IsZero() bool {
 	return l == Label{}
 }
+
+// Matches reports whether l and other identify the same (Target, Scope).
+// Transactional operations use it to detect ErrTargetMismatch /
+// ErrInvalidScope conditions on caller-supplied Installations.
+func (l Label) Matches(other Label) bool {
+	return l == other
+}

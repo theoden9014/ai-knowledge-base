@@ -25,7 +25,7 @@ func (ruleAggregator) Aggregate(entries []*source.Entry, pack *source.Pack) (sou
 	buf.WriteString("\n")
 	ids := make([]string, 0, len(entries))
 	for _, e := range entries {
-		if hasClaudeFrontmatter(e) {
+		if e.HasFrontmatterFor(Target) {
 			return source.Artifact{}, fmt.Errorf("%w: kind=rule entry=%s", ErrFrontmatterMergeConflict, e.ID)
 		}
 		ids = append(ids, e.ID)

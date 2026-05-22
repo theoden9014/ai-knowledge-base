@@ -18,8 +18,8 @@ func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 		"description":            e.Description,
 		"developer_instructions": string(e.Body),
 	}
-	if cfg, ok := e.Tools[Target]; ok {
-		mergeFrontmatter(table, cfg.Frontmatter)
+	for k, v := range e.FrontmatterFor(Target) {
+		table[k] = v
 	}
 	buf, err := toml.Marshal(table)
 	if err != nil {

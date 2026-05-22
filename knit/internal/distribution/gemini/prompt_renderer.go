@@ -25,17 +25,15 @@ func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, 
 	if e.Description != "" {
 		v["description"] = e.Description
 	}
-	if cfg, ok := e.Tools[Target]; ok {
-		for k, val := range cfg.Frontmatter {
-			if val == nil {
-				delete(v, k)
-				continue
-			}
-			if !isTOMLEncodable(val) {
-				return source.Artifact{}, fmt.Errorf("%w: prompt %q: unsupported value type %T at key %q", ErrUnsupportedFrontmatterValue, e.ID, val, k)
-			}
-			v[k] = val
+	for k, val := range e.FrontmatterFor(Target) {
+		if val == nil {
+			delete(v, k)
+			continue
 		}
+		if !isTOMLEncodable(val) {
+			return source.Artifact{}, fmt.Errorf("%w: prompt %q: unsupported value type %T at key %q", ErrUnsupportedFrontmatterValue, e.ID, val, k)
+		}
+		v[k] = val
 	}
 	var buf bytes.Buffer
 	enc := toml.NewEncoder(&buf)

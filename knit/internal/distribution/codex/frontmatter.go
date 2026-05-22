@@ -8,15 +8,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// mergeFrontmatter overwrites dst with the keys and values from src. When a
-// key exists in both, src wins, per the knowledge-format propagation rules
-// for tools.<target>.
-func mergeFrontmatter(dst, src map[string]any) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
 // writeMarkdownWithFrontmatter returns YAML frontmatter plus a Markdown
 // body as a single byte slice. Keys are emitted in alphabetical order so
 // repeated runs over the same input produce identical bytes.

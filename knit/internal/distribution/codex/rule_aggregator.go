@@ -17,7 +17,7 @@ func (ruleAggregator) Aggregate(entries []*source.Entry, pack *source.Pack) (sou
 	fmt.Fprintf(&buf, "# %s\n\n", pack.Name)
 	ids := make([]string, 0, len(entries))
 	for i, e := range entries {
-		if cfg, ok := e.Tools[Target]; ok && len(cfg.Frontmatter) > 0 {
+		if e.HasFrontmatterFor(Target) {
 			return source.Artifact{}, fmt.Errorf("%w: kind=rule entry=%s does not support per-target frontmatter", ErrFrontmatterMergeConflict, e.ID)
 		}
 		if i > 0 {

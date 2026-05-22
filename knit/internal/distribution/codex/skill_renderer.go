@@ -15,8 +15,8 @@ func (skillRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 		"name":        e.Name,
 		"description": e.Description,
 	}
-	if cfg, ok := e.Tools[Target]; ok {
-		mergeFrontmatter(fm, cfg.Frontmatter)
+	for k, v := range e.FrontmatterFor(Target) {
+		fm[k] = v
 	}
 	content, err := writeMarkdownWithFrontmatter(fm, e.Body)
 	if err != nil {

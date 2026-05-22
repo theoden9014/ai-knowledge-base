@@ -15,7 +15,7 @@ type ruleAggregator struct{}
 // tools.gemini.frontmatter.
 func (ruleAggregator) Aggregate(entries []*source.Entry, pack *source.Pack) (source.Artifact, error) {
 	for _, e := range entries {
-		if cfg, ok := e.Tools[Target]; ok && len(cfg.Frontmatter) > 0 {
+		if e.HasFrontmatterFor(Target) {
 			return source.Artifact{}, fmt.Errorf("%w: rule %q cannot accept frontmatter (GEMINI.md has no frontmatter)", ErrFrontmatterMergeConflict, e.ID)
 		}
 	}

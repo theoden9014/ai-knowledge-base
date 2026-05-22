@@ -7,32 +7,7 @@ import (
 	"strings"
 
 	"sigs.k8s.io/yaml"
-
-	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
-
-// hasClaudeFrontmatter reports whether Entry.Tools[claude.Target].Frontmatter
-// is non-empty.
-func hasClaudeFrontmatter(e *source.Entry) bool {
-	cfg, ok := e.Tools[Target]
-	if !ok {
-		return false
-	}
-	return len(cfg.Frontmatter) > 0
-}
-
-// mergeClaudeFrontmatter merges keys from Tools[claude.Target].Frontmatter
-// into fm with overwrite semantics. Frontmatter keys take precedence over
-// the neutral-derived keys.
-func mergeClaudeFrontmatter(fm map[string]any, e *source.Entry) {
-	cfg, ok := e.Tools[Target]
-	if !ok {
-		return
-	}
-	for k, v := range cfg.Frontmatter {
-		fm[k] = v
-	}
-}
 
 // renderWithFrontmatter formats fm as YAML frontmatter and prepends it to
 // body. Keys are emitted in alphabetical order so output stays

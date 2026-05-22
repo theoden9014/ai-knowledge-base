@@ -15,7 +15,9 @@ func (skillRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 		"name":        e.Name,
 		"description": e.Description,
 	}
-	mergeClaudeFrontmatter(fm, e)
+	for k, v := range e.FrontmatterFor(Target) {
+		fm[k] = v
+	}
 	content, err := renderWithFrontmatter(fm, e.Body)
 	if err != nil {
 		return source.Artifact{}, err

@@ -17,7 +17,7 @@ func (promptRenderer) Kind() source.Kind { return source.KindPrompt }
 // Render returns the prompt artifact or ErrFrontmatterMergeConflict when
 // the entry asks for frontmatter that the prompt format cannot represent.
 func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, error) {
-	if hasClaudeFrontmatter(e) {
+	if e.HasFrontmatterFor(Target) {
 		return source.Artifact{}, fmt.Errorf("%w: kind=prompt entry=%s", ErrFrontmatterMergeConflict, e.ID)
 	}
 	return source.Artifact{

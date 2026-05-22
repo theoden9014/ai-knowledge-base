@@ -24,39 +24,62 @@ func newPathPolicy() pathPolicy { return pathPolicy{} }
 // Target returns the Codex target identifier.
 func (pathPolicy) Target() source.Target { return Target }
 
-// Validate applies Codex's path rules to p.
+// codexPathRules indexes Codex's per-top-segment path validators.
+// Adding a new accepted top segment is one entry.
+var codexPathRules = map[string]func(source.ArtifactPath) error{
+	"AGENTS.md": validateAgentsMd,
+	"skills":    validateSkillPath,
+	"agents":    validateAgentTomlPath,
+	"prompts":   validatePromptPath,
+}
+
+// Validate dispatches p to the per-top-segment rule.
 func (pathPolicy) Validate(p source.ArtifactPath) error {
 	if p.IsZero() {
 		return source.ErrInvalidArtifactPath
 	}
-	full := p.String()
-	switch p.TopSegment() {
-	case "AGENTS.md":
-		if full != "AGENTS.md" {
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	case "skills":
-		parts := strings.Split(full, "/")
-		if len(parts) != 3 || parts[1] == "" || parts[2] != "SKILL.md" {
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	case "agents":
-		parts := strings.Split(full, "/")
-		if len(parts) != 2 || !strings.HasSuffix(parts[1], ".toml") || parts[1] == ".toml" {
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	case "prompts":
-		parts := strings.Split(full, "/")
-		if len(parts) != 2 || !strings.HasSuffix(parts[1], ".md") || parts[1] == ".md" {
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	default:
+	rule, ok := codexPathRules[p.TopSegment()]
+	if !ok {
 		return source.ErrInvalidArtifactPath
 	}
+	return rule(p)
+}
+
+// validateAgentsMd accepts the single flat file "AGENTS.md" and nothing
+// else under that prefix.
+func validateAgentsMd(p source.ArtifactPath) error {
+	if p.String() != "AGENTS.md" {
+		return source.ErrInvalidArtifactPath
+	}
+	return nil
+}
+
+// validateSkillPath requires `skills/<name>/SKILL.md` exactly.
+func validateSkillPath(p source.ArtifactPath) error {
+	parts := strings.Split(p.String(), "/")
+	if len(parts) != 3 || parts[1] == "" || parts[2] != "SKILL.md" {
+		return source.ErrInvalidArtifactPath
+	}
+	return nil
+}
+
+// validateAgentTomlPath requires `agents/<name>.toml` (no subdirs).
+func validateAgentTomlPath(p source.ArtifactPath) error {
+	parts := strings.Split(p.String(), "/")
+	if len(parts) != 2 || !strings.HasSuffix(parts[1], ".toml") || parts[1] == ".toml" {
+		return source.ErrInvalidArtifactPath
+	}
+	return nil
+}
+
+// validatePromptPath requires `prompts/<name>.md` (no subdirs; Codex
+// does not allow subdirectories under prompts/).
+func validatePromptPath(p source.ArtifactPath) error {
+	parts := strings.Split(p.String(), "/")
+	if len(parts) != 2 || !strings.HasSuffix(parts[1], ".md") || parts[1] == ".md" {
+		return source.ErrInvalidArtifactPath
+	}
+	return nil
 }
 
 var _ inventory.PathPolicy = pathPolicy{}

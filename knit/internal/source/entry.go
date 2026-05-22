@@ -1,5 +1,7 @@
 package source
 
+import "maps"
+
 // Entry is a single knowledge file loaded from a pack. It carries the neutral
 // frontmatter fields defined by knowledge-format together with the raw
 // markdown body. Target-specific transformations are the Builder's job; Entry
@@ -67,4 +69,31 @@ type ToolConfig struct {
 	// the generated artifact's frontmatter. Same-named fields produced by
 	// the neutral conversion are overridden by this map.
 	Frontmatter map[string]any
+}
+
+// HasFrontmatterFor reports whether the entry declares non-empty
+// tools.<target>.frontmatter. Distribution renderers use this to decide
+// whether the per-target frontmatter conflicts with a frontmatter-less
+// output format (e.g. CLAUDE.md / AGENTS.md / GEMINI.md).
+func (e Entry) HasFrontmatterFor(target Target) bool {
+	cfg, ok := e.Tools[target]
+	return ok && len(cfg.Frontmatter) > 0
+}
+
+// FrontmatterFor returns a defensive copy of tools.<target>.frontmatter,
+// or nil when the entry does not declare frontmatter for target. The
+// copy lets callers merge it into a working map without mutating the
+// pack-loaded Entry.
+func (e Entry) FrontmatterFor(target Target) map[string]any {
+	cfg, ok := e.Tools[target]
+	if !ok || len(cfg.Frontmatter) == 0 {
+		return nil
+	}
+	return maps.Clone(cfg.Frontmatter)
+}
+
+// ParseID returns the Entry.ID parsed as an EntryID value object. Returns
+// ErrInvalidEntryID when Entry.ID does not match <pack>.<kind>.<name>.
+func (e Entry) ParseID() (EntryID, error) {
+	return NewEntryID(e.ID)
 }
