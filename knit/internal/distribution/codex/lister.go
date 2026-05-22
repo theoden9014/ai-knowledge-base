@@ -2,7 +2,6 @@ package codex
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
@@ -30,10 +29,7 @@ func (l *Lister) Target() source.Target { return Target }
 func (l *Lister) List(ctx context.Context, scope inventory.Scope) ([]inventory.Installation, error) {
 	out, err := l.core.List(ctx, scope)
 	if err != nil {
-		if errors.Is(err, inventory.ErrProjectRootNotConfigured) {
-			return nil, ErrProjectRootNotConfigured
-		}
-		return nil, err
+		return nil, Sentinels.TranslateListError(err)
 	}
 	return out, nil
 }

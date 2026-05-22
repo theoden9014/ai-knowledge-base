@@ -1,6 +1,9 @@
 package codex
 
-import "github.com/theoden9014/ai-knowledge-base/knit/internal/source"
+import (
+	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
+	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
+)
 
 // Target is the source.Target constant for the distribution handled by this
 // package. Its value is the kebab-case string "codex", matching the key used
@@ -9,3 +12,11 @@ import "github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 // The Target method on this package's Builder, Installer, Uninstaller, and
 // Lister implementations always returns this value.
 const Target source.Target = "codex"
+
+// Sentinels is the SentinelMap that wraps neutral inventory sentinels into
+// Codex-specific ones.
+var Sentinels = inventory.SentinelMap{
+	InvalidArtifactPath:      ErrInvalidArtifactPath,
+	ProjectRootNotConfigured: ErrProjectRootNotConfigured,
+	UnmanagedArtifactExists:  ErrUnmanagedArtifactExists,
+}

@@ -2,7 +2,6 @@ package claude
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
@@ -37,28 +36,13 @@ func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*I
 func (i *Installer) Target() source.Target { return Target }
 
 // Install delegates to the shared transactional installer and remaps the
-// neutral inventory sentinels to the Claude-specific ones.
+// neutral inventory sentinels to the Claude-specific ones via Sentinels.
 func (i *Installer) Install(ctx context.Context, scope inventory.Scope, artifact source.Artifact) (inventory.Installation, error) {
 	installed, err := i.core.Install(ctx, scope, artifact)
 	if err != nil {
-		return inventory.Installation{}, translateInstallError(err, artifact.Path)
+		return inventory.Installation{}, Sentinels.TranslateInstallError(err, artifact.Path)
 	}
 	return installed, nil
-}
-
-// translateInstallError maps the neutral inventory sentinels into the
-// Claude-specific sentinels that this package exposes to consumers.
-func translateInstallError(err error, artifactPath string) error {
-	switch {
-	case errors.Is(err, source.ErrInvalidArtifactPath):
-		return fmt.Errorf("%w: %s", ErrInvalidArtifactPath, artifactPath)
-	case errors.Is(err, inventory.ErrProjectRootNotConfigured):
-		return ErrProjectRootNotConfigured
-	case errors.Is(err, inventory.ErrUnmanagedArtifactExists):
-		return fmt.Errorf("%w: path=%s", ErrUnmanagedArtifactExists, artifactPath)
-	default:
-		return err
-	}
 }
 
 var _ inventory.Installer = (*Installer)(nil)

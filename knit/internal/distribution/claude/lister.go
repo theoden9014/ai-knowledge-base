@@ -2,7 +2,6 @@ package claude
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
@@ -34,14 +33,11 @@ func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) (*List
 func (l *Lister) Target() source.Target { return Target }
 
 // List delegates to the shared transactional lister and remaps the neutral
-// inventory sentinels to the Claude-specific ones.
+// inventory sentinels via Sentinels.
 func (l *Lister) List(ctx context.Context, scope inventory.Scope) ([]inventory.Installation, error) {
 	out, err := l.core.List(ctx, scope)
 	if err != nil {
-		if errors.Is(err, inventory.ErrProjectRootNotConfigured) {
-			return nil, ErrProjectRootNotConfigured
-		}
-		return nil, err
+		return nil, Sentinels.TranslateListError(err)
 	}
 	return out, nil
 }
