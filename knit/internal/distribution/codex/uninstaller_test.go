@@ -64,14 +64,10 @@ func TestUninstaller_Uninstall_RemovesFileAndSidecarAndEmptyDir(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(userRoot, "skills", "x")); !os.IsNotExist(err) {
 		t.Errorf("skills/x/ directory still exists after Uninstall (should be removed when empty), err = %v", err)
 	}
-	// The sidecar is removed as well.
-	sidecarDir := filepath.Join(userRoot, ".knit", "labels", "codex", "user")
-	entries, err := os.ReadDir(sidecarDir)
-	if err != nil && !os.IsNotExist(err) {
-		t.Fatalf("ReadDir(sidecarDir) err = %v", err)
-	}
-	if len(entries) != 0 {
-		t.Errorf("sidecar dir not empty after Uninstall: %d files", len(entries))
+	// The sidecar is removed as well: verify via the LabelStore API so
+	// the test does not encode SidecarLabelStore's internal layout.
+	if _, gErr := labels.Get(context.Background(), inventory.ScopeUser, got.ID); !errors.Is(gErr, inventory.ErrInstallationNotFound) {
+		t.Errorf("LabelStore.Get(%q) err = %v, want ErrInstallationNotFound", got.ID, gErr)
 	}
 }
 

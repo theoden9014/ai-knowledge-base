@@ -52,14 +52,11 @@ func TestInstaller_Install_WritesFileAndSidecar(t *testing.T) {
 	if diff := cmp.Diff(a.Content, body); diff != "" {
 		t.Errorf("written content mismatch (-want +got):\n%s", diff)
 	}
-	// The sidecar exists.
-	sidecarDir := filepath.Join(userRoot, ".knit", "labels", "codex", "user")
-	entries, err := os.ReadDir(sidecarDir)
-	if err != nil {
-		t.Fatalf("sidecar dir not found: %v", err)
-	}
-	if len(entries) != 1 {
-		t.Errorf("sidecar count = %d, want 1", len(entries))
+	// The sidecar exists: verify via the LabelStore API instead of
+	// inspecting the on-disk layout, so this test stays insulated from
+	// SidecarLabelStore's internal directory convention.
+	if _, gErr := labels.Get(context.Background(), inventory.ScopeUser, got.ID); gErr != nil {
+		t.Errorf("LabelStore.Get(%q) err = %v, want nil", got.ID, gErr)
 	}
 	// The Installation struct is populated correctly.
 	if got.Label.Target != Target || got.Label.Scope != inventory.ScopeUser {
