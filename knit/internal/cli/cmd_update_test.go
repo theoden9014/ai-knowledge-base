@@ -29,7 +29,7 @@ func TestUpdateCommand_Run_afterInstall(t *testing.T) {
 		t.Fatalf("install: %v", err)
 	}
 	// Mutate the source body to verify update picks up the new content.
-	skillPath := filepath.Join(f.knowledgeDir, f.pack, "skills", "a.md")
+	skillPath := filepath.Join(f.knowledgeDir, f.pack, "skills", "a", "SKILL.md")
 	updated := `---
 id: p.skill.a
 kind: skill

@@ -37,11 +37,11 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
   - id: p.agent.x
     path: agents/x.md
 `)},
-		"p/skills/a.md": {Data: []byte(`---
+		"p/skills/a/SKILL.md": {Data: []byte(`---
 id: p.skill.a
 kind: skill
 name: p-a
@@ -95,7 +95,7 @@ body of agent x
 						Frontmatter: map[string]any{"foo": "bar"},
 					},
 				},
-				Path: "skills/a.md",
+				Path: "skills/a/SKILL.md",
 				Body: []byte("body of skill a\n"),
 			},
 			{
@@ -125,7 +125,7 @@ func TestLoader_LoadPack_errors(t *testing.T) {
 		{
 			name: "missing manifest",
 			fsys: fstest.MapFS{
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrManifestNotFound,
@@ -138,9 +138,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrSchemaViolation,
@@ -153,7 +153,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
 			},
 			packDir:  "p",
@@ -167,9 +167,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: PackA\ndescription: bad name\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: PackA\ndescription: bad name\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrSchemaViolation,
@@ -182,9 +182,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.b\nkind: skill\nname: p-b\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.b\nkind: skill\nname: p-b\ndescription: d\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrIDMismatch,
@@ -197,12 +197,12 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
   - id: p.skill.a
-    path: skills/a2.md
+    path: skills/a2/SKILL.md
 `)},
-				"p/skills/a.md":  {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
-				"p/skills/a2.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md":  {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a2/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrDuplicateEntryID,
@@ -215,9 +215,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.a\nkind: skil\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skil\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
 			packDir:  "p",
 			wantKind: ErrInvalidKind,
@@ -230,9 +230,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
-				"p/skills/a.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
 			ctxFn: func() context.Context {
 				ctx, cancel := context.WithCancel(context.Background())

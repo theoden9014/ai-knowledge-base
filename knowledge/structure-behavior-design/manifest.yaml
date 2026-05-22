@@ -9,21 +9,21 @@ default_tools: [claude, codex, gemini]
 
 entries:
   - id: structure-behavior-design.skill.orchestrator
-    path: skills/orchestrator.md
+    path: skills/orchestrator/SKILL.md
   - id: structure-behavior-design.skill.requirements-specification
-    path: skills/requirements-specification.md
+    path: skills/requirements-specification/SKILL.md
   - id: structure-behavior-design.skill.conceptual-modeling
-    path: skills/conceptual-modeling.md
+    path: skills/conceptual-modeling/SKILL.md
   - id: structure-behavior-design.skill.solid-responsibility
-    path: skills/solid-responsibility.md
+    path: skills/solid-responsibility/SKILL.md
   - id: structure-behavior-design.skill.interface-design
-    path: skills/interface-design.md
+    path: skills/interface-design/SKILL.md
   - id: structure-behavior-design.skill.test-specification
-    path: skills/test-specification.md
+    path: skills/test-specification/SKILL.md
   - id: structure-behavior-design.skill.tdd-construction
-    path: skills/tdd-construction.md
+    path: skills/tdd-construction/SKILL.md
   - id: structure-behavior-design.skill.refactoring-review
-    path: skills/refactoring-review.md
+    path: skills/refactoring-review/SKILL.md
 
   - id: structure-behavior-design.agent.requirements-reviewer
     path: agents/requirements-reviewer.md

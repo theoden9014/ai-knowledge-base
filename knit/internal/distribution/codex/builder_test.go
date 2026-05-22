@@ -33,7 +33,7 @@ func TestBuilder_Build_KindSkill(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-orchestrator",
 				Description: "orchestrator skill",
-				Path:        "skills/orchestrator.md",
+				Path:        "skills/orchestrator/SKILL.md",
 				Body:        []byte("# body\n"),
 			},
 		},
@@ -83,7 +83,7 @@ func TestBuilder_Build_KindSkill_FrontmatterMerge(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-s",
 				Description: "original",
-				Path:        "skills/s.md",
+				Path:        "skills/s/SKILL.md",
 				Body:        []byte("body\n"),
 				Tools: map[source.Target]source.ToolConfig{
 					Target: {
@@ -350,7 +350,7 @@ func TestBuilder_Build_RespectsToolsEnabled(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-included",
 				Description: "yes",
-				Path:        "skills/included.md",
+				Path:        "skills/included/SKILL.md",
 				Body:        []byte("body\n"),
 			},
 			{
@@ -358,7 +358,7 @@ func TestBuilder_Build_RespectsToolsEnabled(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-excluded",
 				Description: "no",
-				Path:        "skills/excluded.md",
+				Path:        "skills/excluded/SKILL.md",
 				Body:        []byte("body\n"),
 				Tools: map[source.Target]source.ToolConfig{
 					Target: {Enabled: boolPtr(false)},
@@ -398,7 +398,7 @@ func TestBuilder_Build_DefaultToolsExclusion(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-a",
 				Description: "x",
-				Path:        "skills/a.md",
+				Path:        "skills/a/SKILL.md",
 				Body:        []byte("body\n"),
 			},
 		},
@@ -422,7 +422,7 @@ func TestBuilder_Build_EmitsCodexTargetForAllArtifacts(t *testing.T) {
 				ID:   "demo.skill.a",
 				Kind: source.KindSkill,
 				Name: "demo-a",
-				Path: "skills/a.md",
+				Path: "skills/a/SKILL.md",
 				Body: []byte("body\n"),
 			},
 			{

@@ -37,7 +37,7 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `
 	skill := `---
 id: p.skill.a
@@ -50,7 +50,11 @@ body of skill a
 	if err := os.WriteFile(filepath.Join(knowledgeDir, pack, "manifest.yaml"), []byte(manifest), 0o644); err != nil {
 		t.Fatalf("write manifest: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(knowledgeDir, pack, "skills", "a.md"), []byte(skill), 0o644); err != nil {
+	skillDir := filepath.Join(knowledgeDir, pack, "skills", "a")
+	if err := os.MkdirAll(skillDir, 0o755); err != nil {
+		t.Fatalf("mkdir skill dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(skillDir, "SKILL.md"), []byte(skill), 0o644); err != nil {
 		t.Fatalf("write skill: %v", err)
 	}
 	homeDir := filepath.Join(tmp, "home")

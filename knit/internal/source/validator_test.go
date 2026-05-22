@@ -33,7 +33,7 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: structure-behavior-design.skill.orchestrator
-    path: skills/orchestrator.md
+    path: skills/orchestrator/SKILL.md
 `)},
 			wantErr: false,
 		},
@@ -44,7 +44,7 @@ version: 0.1.0
 description: test pack
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
@@ -57,7 +57,7 @@ version: 0.1.0
 description: test pack
 entries:
   - id: structure-behavior-design.skill.orchestrator
-    path: skills/orchestrator.md
+    path: skills/orchestrator/SKILL.md
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
@@ -88,7 +88,7 @@ description: d
 unknown_field: surprise
 entries:
   - id: p.skill.a
-    path: skills/a.md
+    path: skills/a/SKILL.md
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,

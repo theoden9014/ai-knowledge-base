@@ -118,7 +118,7 @@ func remotePackFS(packDir, packName string) fstest.MapFS {
 		"default_tools: [claude]\n" +
 		"entries:\n" +
 		"  - id: " + packName + ".skill.a\n" +
-		"    path: skills/a.md\n"
+		"    path: skills/a/SKILL.md\n"
 	skill := "---\n" +
 		"id: " + packName + ".skill.a\n" +
 		"kind: skill\n" +
@@ -127,8 +127,8 @@ func remotePackFS(packDir, packName string) fstest.MapFS {
 		"---\n" +
 		"body of remote skill a\n"
 	return fstest.MapFS{
-		packDir + "/manifest.yaml": {Data: []byte(manifest)},
-		packDir + "/skills/a.md":   {Data: []byte(skill)},
+		packDir + "/manifest.yaml":     {Data: []byte(manifest)},
+		packDir + "/skills/a/SKILL.md": {Data: []byte(skill)},
 	}
 }
 

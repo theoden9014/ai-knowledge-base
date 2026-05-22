@@ -49,8 +49,8 @@
         },
         "path": {
           "type": "string",
-          "description": "Path of the entry file relative to the pack root.",
-          "pattern": "^(skills|agents|rules|prompts)/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
+          "description": "Path of the entry file relative to the pack root. Skill entries use a per-skill directory containing SKILL.md so the skill can carry sibling assets (scripts/, references/, ...) alongside the body; other kinds remain single files.",
+          "pattern": "^(skills/[a-z0-9]+(-[a-z0-9]+)*/SKILL\\.md|(agents|rules|prompts)/[a-z0-9]+(-[a-z0-9]+)*\\.md)$"
         }
       }
     }
