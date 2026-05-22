@@ -68,8 +68,6 @@ pair this command emits a warning to stderr and exits with ExitSuccess.
 }
 
 // Flags returns a FlagSet containing --scope and --target.
-// (uninstall does not register --knowledge-dir because it does not read
-// knowledge/.)
 func (c *uninstallCommand) Flags() *flag.FlagSet {
 	fs := flag.NewFlagSet("uninstall", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -80,21 +78,17 @@ func (c *uninstallCommand) Flags() *flag.FlagSet {
 
 // Run executes the flow described above.
 //
-// The <pack> argument accepts **local pack names only**. Passing a
-// remote URL returns ErrUsage.
+// The <pack> argument accepts local pack names and local directory paths.
+// Passing a remote URL returns ErrUsage.
 //
 // Design decision:
 //   - uninstall matches by extracting the <pack> segment from
 //     Provenance.SourceEntryIDs of the form <pack>.<kind>.<entry> on the
 //     Installations returned by Lister.
-//   - The normalization rule from a remote URL to this <pack> name is
-//     not yet defined in the current phase, so remote URLs are not
-//     allowed to avoid unintended deletions caused by false matches.
-//   - If support is added later, the command should read Pack.Name via
-//     loadPackFromArg and use that as the key. Pack.Name comes from the
-//     manifest.yaml `pack:` field and is uniquely determined for both
-//     local and remote inputs, so that value can be passed to
-//     installationBelongsToPack.
+//   - Local directory paths are loaded only to recover Pack.Name from
+//     manifest.yaml.
+//   - Remote URLs are not allowed because uninstall should not perform a
+//     network fetch before deleting local files.
 func (c *uninstallCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) error {
 	arg, err := requirePackArg(fs)
 	if err != nil {

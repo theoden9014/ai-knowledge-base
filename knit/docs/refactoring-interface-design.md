@@ -98,9 +98,9 @@ Lister の判定:
 | `source.Loader` / `source.Validator` | 変更しない | 範囲外 |
 | `source.Builder` (target 横断) | シグネチャ維持。実装が RendererRegistry を保持し Pack を走査するだけになる | consumer 影響を抑制 |
 | `source.Pack` | 変更なし | 範囲外 |
-| `source.Entry` | `EntryID()` メソッドを追加 (Entry が ID を所有) | 値オブジェクト化の自然な置き場所 |
-| `source.Artifact` | Path を ArtifactPath に置換 | 本リファクタの主目的 |
-| `inventory.Installer/Uninstaller/Lister` (interface) | **interface は維持し、TransactionalInstaller/Uninstaller/Lister がそれぞれ直接 interface を満たす**。ラッパー型は作らない | 中間翻訳層を作らない (レビュー指摘 I-10) |
+| `source.Entry` | ID は文字列フィールドのまま維持し、必要箇所で `source.NewEntryID` を使う | 未使用 API を増やさない |
+| `source.Artifact` | Path は互換性のため string のまま維持し、inventory 境界で ArtifactPath に変換 | consumer 影響を抑制 |
+| `inventory.Installer/Uninstaller/Lister` (interface) | **interface は維持し、TransactionalInstaller/Uninstaller/Lister を各 distribution の薄いラッパーから利用する** | target 固有 sentinel 変換を distribution 境界に残す |
 | `inventory.LabelStore` | 変更しない | 範囲外 |
 | `inventory.Installation` | コンストラクタ経由を public な構築規約に変更し、ゼロ値構築を抑止。`Provenance` は Label 由来のビューを返すメソッドに |  |
 | `inventory.InstallationID` | 文字列ベースは維持。`FromArtifactPath` コンストラクタ + EncodedBaseName/DecodedBaseName メソッドを追加 |  |

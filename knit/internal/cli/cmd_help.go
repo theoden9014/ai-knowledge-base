@@ -25,12 +25,12 @@ import (
 //     first and then calls NewHelpCommand to inject the set.
 type helpCommand struct {
 	// commands is the slice of all commands that help can inspect.
-	// It may include help itself so that help can describe help.
+	// Execute passes the primary command set here; App's top-level overview
+	// includes help separately.
 	commands []Command
 }
 
-// NewHelpCommand constructs the help command. The commands argument
-// must contain the full command set, including help itself.
+// NewHelpCommand constructs the help command from the primary command set.
 func NewHelpCommand(commands []Command) Command {
 	return &helpCommand{commands: commands}
 }

@@ -24,8 +24,8 @@
 //
 // # Pack Argument Interpretation (Wave6)
 //
-// The <pack-or-path-or-url> argument for install / update / build is
-// triaged into the following three forms (see [loadPackFromArg] for
+// The <pack-or-path-or-url> argument for install / build, and explicit-source
+// update, is triaged into the following three forms (see [loadPackFromArg] for
 // details):
 //
 //  1. A remote git URL (first segment is host-like, e.g. "github.com")
@@ -50,12 +50,14 @@
 //     search from cwd). If knowledge/ is not found,
 //     [ErrKnowledgeDirNotFound] is returned.
 //
-// uninstall accepts **local pack names only** (remote URLs and local
-// paths return ErrUsage). The reason is that matching extracts the
-// <pack> portion from Installation.Provenance.SourceEntryIDs of the form
-// <pack>.<kind>.<entry>, and the normalization rule from URL / path to
-// an existing local pack name is still undefined. See the cmd_uninstall.go
-// godoc for details.
+// update has one additional rule: a bare pack name refreshes only
+// installations that have a recorded remote source. Packs installed from local
+// sources must be updated by passing the local path explicitly.
+//
+// uninstall accepts local pack names and local directory paths. For local
+// directory paths, the manifest is read only to recover the canonical Pack.Name
+// used for matching Installation.Provenance. Remote URLs return ErrUsage so a
+// network fetch can never trigger deletion.
 //
 // # Fetcher DI
 //

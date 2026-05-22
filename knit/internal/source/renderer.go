@@ -52,8 +52,8 @@ func NewRendererRegistry(target Target) *RendererRegistry {
 	}
 }
 
-// Register adds renderer to the table. The first renderer for a Kind wins;
-// subsequent calls overwrite it.
+// Register adds renderer to the table. Registering the same Kind again
+// overwrites the previous renderer.
 func (r *RendererRegistry) Register(renderer KindRenderer) {
 	r.renderers[renderer.Kind()] = renderer
 }
