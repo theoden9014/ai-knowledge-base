@@ -191,38 +191,3 @@ func TestEntryID_IsZero(t *testing.T) {
 		})
 	}
 }
-
-func TestEntryID_Equal(t *testing.T) {
-	type fields struct {
-		pack string
-		kind Kind
-		name string
-	}
-	type args struct {
-		other EntryID
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{name: "equal", fields: fields{pack: "p", kind: KindSkill, name: "n"}, args: args{other: EntryID{pack: "p", kind: KindSkill, name: "n"}}, want: true},
-		{name: "pack differs", fields: fields{pack: "p", kind: KindSkill, name: "n"}, args: args{other: EntryID{pack: "q", kind: KindSkill, name: "n"}}, want: false},
-		{name: "kind differs", fields: fields{pack: "p", kind: KindSkill, name: "n"}, args: args{other: EntryID{pack: "p", kind: KindAgent, name: "n"}}, want: false},
-		{name: "name differs", fields: fields{pack: "p", kind: KindSkill, name: "n"}, args: args{other: EntryID{pack: "p", kind: KindSkill, name: "m"}}, want: false},
-		{name: "both zero are equal", fields: fields{}, args: args{other: EntryID{}}, want: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			id := EntryID{
-				pack: tt.fields.pack,
-				kind: tt.fields.kind,
-				name: tt.fields.name,
-			}
-			if got := id.Equal(tt.args.other); got != tt.want {
-				t.Errorf("EntryID.Equal() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

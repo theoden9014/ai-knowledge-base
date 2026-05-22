@@ -40,21 +40,6 @@ const (
 	ArgKindRemoteURL
 )
 
-// String returns a stable kebab-case label for the Kind. Used only for
-// error messages and debug output.
-func (k ArgKind) String() string {
-	switch k {
-	case ArgKindPackName:
-		return "pack-name"
-	case ArgKindLocalPath:
-		return "local-path"
-	case ArgKindRemoteURL:
-		return "remote-url"
-	default:
-		return "unknown"
-	}
-}
-
 // TriagedArg is the output of [TriageArg]: a classified argument plus a
 // "Cleaned" form ready for the corresponding loader.
 //

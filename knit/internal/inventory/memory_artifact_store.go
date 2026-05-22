@@ -3,7 +3,6 @@ package inventory
 import (
 	"context"
 	"io/fs"
-	"strings"
 	"sync"
 )
 
@@ -74,37 +73,6 @@ func (s *MemoryArtifactStore) PruneAncestorsWithin(_ context.Context, child Abso
 		return ErrPruneBoundaryViolation
 	}
 	return nil
-}
-
-// Content returns a copy of the bytes stored at p, or (nil, false) when
-// absent. Intended for assertions in tests.
-func (s *MemoryArtifactStore) Content(p AbsoluteArtifactPath) ([]byte, bool) {
-	if p.IsZero() {
-		return nil, false
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	f, ok := s.files[p.String()]
-	if !ok {
-		return nil, false
-	}
-	out := make([]byte, len(f.content))
-	copy(out, f.content)
-	return out, true
-}
-
-// PathsUnder returns every stored path that begins with prefix, in
-// undefined order. Intended for assertions in tests.
-func (s *MemoryArtifactStore) PathsUnder(prefix string) []string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var out []string
-	for k := range s.files {
-		if strings.HasPrefix(k, prefix) {
-			out = append(out, k)
-		}
-	}
-	return out
 }
 
 // Static type check.

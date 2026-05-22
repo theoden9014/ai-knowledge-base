@@ -8,9 +8,8 @@ import (
 
 // installationIDSeparator is the encoded form of '/' used when an
 // InstallationID is rendered into a single-segment base name (for example,
-// a sidecar file name). Selected because '_' is not produced by ArtifactPath
-// invariants (kebab-case lowercase plus hyphens and dots) within the path
-// segments knit emits, so the encoding round-trips losslessly.
+// a sidecar file name). The IDs knit emits are derived from generated artifact
+// paths whose path segments do not contain underscores.
 const installationIDSeparator = "_"
 
 // NewInstallationIDFromArtifactPath derives an InstallationID from rel.

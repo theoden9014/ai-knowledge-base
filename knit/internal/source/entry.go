@@ -91,9 +91,3 @@ func (e Entry) FrontmatterFor(target Target) map[string]any {
 	}
 	return maps.Clone(cfg.Frontmatter)
 }
-
-// ParseID returns the Entry.ID parsed as an EntryID value object. Returns
-// ErrInvalidEntryID when Entry.ID does not match <pack>.<kind>.<name>.
-func (e Entry) ParseID() (EntryID, error) {
-	return NewEntryID(e.ID)
-}

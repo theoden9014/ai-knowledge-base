@@ -77,10 +77,9 @@ func buildFactory(rt *Runtime, scopeFlag, targetFlag string) (inventory.Scope, [
 }
 
 // resolveKnowledgeDir auto-detects the absolute path to the knowledge/
-// directory using knowledgeResolver. With --knowledge-dir gone, only the
-// upward-search path remains.
+// directory using knowledgeResolver.
 func resolveKnowledgeDir(rt *Runtime) (string, error) {
-	return newKnowledgeResolver(rt).resolve("")
+	return newKnowledgeResolver(rt).resolve()
 }
 
 // loadPack loads a single pack from knowledgeDir/<packName>/ using the
@@ -218,22 +217,10 @@ type resolvedPack struct {
 	Cleanup func() error
 }
 
-// argResolver loads a single resolvedPack for one ArgKind. The shared
-// loadPackFromArg dispatcher chooses the right resolver from packResolvers.
-type argResolver func(ctx context.Context, rt *Runtime, t TriagedArg) (*resolvedPack, error)
-
-// packResolvers maps ArgKind to its resolver. Adding a new ArgKind is
-// one entry plus a resolver function below.
-var packResolvers = map[ArgKind]argResolver{
-	ArgKindRemoteURL: resolveRemoteURLArg,
-	ArgKindLocalPath: resolveLocalPathArg,
-	ArgKindPackName:  resolvePackNameArg,
-}
-
 // loadPackFromArg is the unified entry point used by install / update /
 // build for the <pack-or-path-or-url> positional argument. Triage is
 // delegated to [TriageArg]; this function applies an ambiguity guard and
-// then forwards to the [argResolver] registered for the resulting kind.
+// then dispatches to the resolver for the resulting kind.
 //
 // Error handling per Kind:
 //   - ArgKindRemoteURL : remote.Parse / remote.Dispatch errors surface
@@ -260,14 +247,19 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 		)
 	}
 
-	resolver, ok := packResolvers[t.Kind]
-	if !ok {
+	switch t.Kind {
+	case ArgKindRemoteURL:
+		return resolveRemoteURLArg(ctx, rt, t)
+	case ArgKindLocalPath:
+		return resolveLocalPathArg(ctx, rt, t)
+	case ArgKindPackName:
+		return resolvePackNameArg(ctx, rt, t)
+	default:
 		// Unreachable while TriageArg only returns the registered kinds;
-		// kept so that adding a new ArgKind without updating
-		// packResolvers fails loudly at runtime rather than silently.
+		// kept so that adding a new ArgKind without updating this switch
+		// fails loudly at runtime rather than silently.
 		return nil, fmt.Errorf("%w: unknown ArgKind=%d", ErrUsage, t.Kind)
 	}
-	return resolver(ctx, rt, t)
 }
 
 // resolveRemoteURLArg fetches a remote pack and wraps the result in a

@@ -6,26 +6,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestArgKind_String(t *testing.T) {
-	tests := []struct {
-		name string
-		k    ArgKind
-		want string
-	}{
-		{name: "pack-name", k: ArgKindPackName, want: "pack-name"},
-		{name: "local-path", k: ArgKindLocalPath, want: "local-path"},
-		{name: "remote-url", k: ArgKindRemoteURL, want: "remote-url"},
-		{name: "unknown value falls through to unknown", k: ArgKind(99), want: "unknown"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.k.String(); got != tt.want {
-				t.Errorf("ArgKind.String() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestTriageArg(t *testing.T) {
 	type args struct {
 		arg string

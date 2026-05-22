@@ -99,37 +99,6 @@ func TestArtifactPath_IsZero(t *testing.T) {
 	}
 }
 
-func TestArtifactPath_Equal(t *testing.T) {
-	type fields struct {
-		value string
-	}
-	type args struct {
-		other ArtifactPath
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{name: "equal non-zero values", fields: fields{value: "skills/foo/SKILL.md"}, args: args{other: ArtifactPath{value: "skills/foo/SKILL.md"}}, want: true},
-		{name: "different values", fields: fields{value: "skills/foo/SKILL.md"}, args: args{other: ArtifactPath{value: "agents/x.toml"}}, want: false},
-		{name: "zero values are equal", fields: fields{value: ""}, args: args{other: ArtifactPath{}}, want: true},
-		{name: "zero vs non-zero", fields: fields{value: ""}, args: args{other: ArtifactPath{value: "AGENTS.md"}}, want: false},
-		{name: "non-zero vs zero", fields: fields{value: "AGENTS.md"}, args: args{other: ArtifactPath{}}, want: false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := ArtifactPath{
-				value: tt.fields.value,
-			}
-			if got := p.Equal(tt.args.other); got != tt.want {
-				t.Errorf("ArtifactPath.Equal() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestArtifactPath_TopSegment(t *testing.T) {
 	type fields struct {
 		value string

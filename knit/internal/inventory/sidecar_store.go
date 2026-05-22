@@ -49,13 +49,6 @@ type SidecarLabelStore struct {
 	projectLabelsRoot string
 }
 
-// sidecarSeparator is the substitution character used to flatten an
-// InstallationID containing '/' into a single base name. The choice mirrors
-// the existing distribution-level sidecar encoding: knowledge-format pack and
-// entry names are kebab-case ([a-z0-9-]), so '_' never appears inside a valid
-// InstallationID and the encoding round-trips unambiguously.
-const sidecarSeparator = "_"
-
 // sidecarExt is the on-disk extension for a label sidecar.
 const sidecarExt = ".json"
 
@@ -332,20 +325,12 @@ func (s *SidecarLabelStore) List(ctx context.Context, scope Scope) ([]LabelEntry
 	return out, nil
 }
 
-// encodeBaseName flattens an InstallationID into a base name by replacing
-// '/' with sidecarSeparator. See type doc for the rationale.
 func encodeBaseName(id InstallationID) string {
-	return strings.ReplaceAll(string(id), "/", sidecarSeparator)
+	return id.EncodedBaseName()
 }
 
-// decodeBaseName restores an InstallationID from a sidecar base name (without
-// extension). Reports false when the base name is empty so the caller can skip
-// it during List.
 func decodeBaseName(base string) (InstallationID, bool) {
-	if base == "" {
-		return "", false
-	}
-	return InstallationID(strings.ReplaceAll(base, sidecarSeparator, "/")), true
+	return InstallationIDFromBaseName(base)
 }
 
 // Static type check for early detection of signature drift.

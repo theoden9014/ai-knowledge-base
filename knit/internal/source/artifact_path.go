@@ -50,9 +50,6 @@ func (p ArtifactPath) String() string { return p.value }
 // IsZero reports whether p is the zero value.
 func (p ArtifactPath) IsZero() bool { return p.value == "" }
 
-// Equal reports structural equality.
-func (p ArtifactPath) Equal(other ArtifactPath) bool { return p.value == other.value }
-
 // TopSegment returns the first path segment (the part before the first "/").
 // Returns "" for the zero value.
 func (p ArtifactPath) TopSegment() string {

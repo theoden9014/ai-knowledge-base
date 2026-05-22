@@ -20,31 +20,12 @@ func Test_newKnowledgeResolver(t *testing.T) {
 
 func Test_knowledgeResolver_resolve(t *testing.T) {
 	tests := []struct {
-		name     string
-		wd       string
-		fsys     fstest.MapFS
-		explicit string
-		want     string
-		wantErr  error
+		name    string
+		wd      string
+		fsys    fstest.MapFS
+		want    string
+		wantErr error
 	}{
-		{
-			name:     "explicit absolute path returned as-is",
-			wd:       "/repo",
-			explicit: "/elsewhere/knowledge",
-			want:     "/elsewhere/knowledge",
-		},
-		{
-			name:     "explicit relative path resolved against cwd",
-			wd:       "/repo/proj",
-			explicit: "subdir/knowledge",
-			want:     "/repo/proj/subdir/knowledge",
-		},
-		{
-			name:     "explicit dot resolved against cwd",
-			wd:       "/repo/proj",
-			explicit: ".",
-			want:     "/repo/proj",
-		},
 		{
 			name: "no explicit + knowledge at cwd",
 			wd:   "/repo/proj",
@@ -71,7 +52,7 @@ func Test_knowledgeResolver_resolve(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newKnowledgeResolver(newTestRuntime(nil, tt.wd, tt.fsys))
-			got, err := r.resolve(tt.explicit)
+			got, err := r.resolve()
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) {
 					t.Fatalf("err = %v, want %v", err, tt.wantErr)

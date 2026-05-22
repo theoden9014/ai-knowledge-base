@@ -61,11 +61,6 @@ func (id EntryID) String() string {
 // IsZero reports whether id is the zero value.
 func (id EntryID) IsZero() bool { return id.pack == "" && id.kind == "" && id.name == "" }
 
-// Equal reports structural equality.
-func (id EntryID) Equal(other EntryID) bool {
-	return id.pack == other.pack && id.kind == other.kind && id.name == other.name
-}
-
 // splitEntryID partitions s into (pack, kind, name) at the FIRST and LAST dot.
 // This handles cases where the pack name itself contains dots... but kebab-case
 // forbids dots, so the only valid split is exactly two dots. We enforce that

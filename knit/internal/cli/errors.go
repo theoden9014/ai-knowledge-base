@@ -42,9 +42,8 @@ var (
 	// found while resolving scope=project. It maps to ExitConfig.
 	ErrProjectRootNotFound = errors.New("cli: project root not found")
 
-	// ErrKnowledgeDirNotFound is returned when knowledge/ cannot be found,
-	// either because --knowledge-dir was not specified or because
-	// auto-detection also failed. It maps to ExitConfig.
+	// ErrKnowledgeDirNotFound is returned when knowledge/ cannot be found by
+	// upward auto-detection. It maps to ExitConfig.
 	ErrKnowledgeDirNotFound = errors.New("cli: knowledge directory not found")
 
 	// ErrPartialFailure represents a run across multiple Targets, such as
