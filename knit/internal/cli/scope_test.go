@@ -287,12 +287,20 @@ func Test_scopeResolver_findUpwards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := newScopeResolver(newTestRuntime(nil, "/", tt.fsys))
-			got, err := r.findUpwards(tt.start, tt.markers)
+			start := FsPath{}
+			if tt.start != "" {
+				start = FsPathFromAbs("/" + tt.start)
+			}
+			got, ok, err := r.findUpwards(start, tt.markers)
 			if err != nil {
 				t.Fatalf("unexpected err: %v", err)
 			}
-			if got != tt.want {
-				t.Errorf("got %q, want %q", got, tt.want)
+			gotStr := ""
+			if ok {
+				gotStr = got.String()
+			}
+			if gotStr != tt.want {
+				t.Errorf("got %q, want %q", gotStr, tt.want)
 			}
 		})
 	}

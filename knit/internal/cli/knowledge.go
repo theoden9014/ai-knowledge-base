@@ -58,12 +58,12 @@ func (r *knowledgeResolver) resolve(explicit string) (string, error) {
 		return "", fmt.Errorf("cli: getwd: %w", err)
 	}
 	sr := newScopeResolver(r.rt)
-	found, err := sr.findUpwards(absToFsPath(wd), []string{knowledgeDirName})
+	found, ok, err := sr.findUpwards(FsPathFromAbs(wd), []string{knowledgeDirName})
 	if err != nil {
 		return "", err
 	}
-	if found == "" {
+	if !ok {
 		return "", ErrKnowledgeDirNotFound
 	}
-	return filepath.Join(fsPathToAbs(found), knowledgeDirName), nil
+	return filepath.Join(found.Abs(), knowledgeDirName), nil
 }

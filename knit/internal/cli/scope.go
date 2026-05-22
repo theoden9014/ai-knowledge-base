@@ -3,9 +3,6 @@ package cli
 import (
 	"fmt"
 	"io/fs"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
 )
@@ -71,15 +68,14 @@ func (r *scopeResolver) projectRoot() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cli: getwd: %w", err)
 	}
-	startFsPath := absToFsPath(wd)
-	found, err := r.findUpwards(startFsPath, projectRootMarkers())
+	found, ok, err := r.findUpwards(FsPathFromAbs(wd), projectRootMarkers())
 	if err != nil {
 		return "", err
 	}
-	if found == "" {
+	if !ok {
 		return "", ErrProjectRootNotFound
 	}
-	return fsPathToAbs(found), nil
+	return found.Abs(), nil
 }
 
 // projectRootMarkers returns the priority-ordered marker list used by
@@ -122,83 +118,31 @@ func validateScope(s string) (inventory.Scope, error) {
 
 // findUpwards starts from startDir and walks toward parent directories,
 // searching rt.Fsys for a directory that contains any of the markers.
-// It returns the matching path within rt.Fsys. If nothing is found, it
-// returns an empty string and nil, treating the outcome as "not found"
-// rather than an error.
+// It returns the matching FsPath when one is found; otherwise the
+// second return value is false (treated as "not found" rather than an
+// error).
 //
-// Path unification: callers (scopeResolver / knowledgeResolver) are
-// expected to pass Runtime.Fsys as the filesystem under search, and this
-// function accepts only the fs.FS abstraction. That lets it treat the
-// real filesystem from os.DirFS("/") and fstest.MapFS equivalently.
-//
-// startDir must be a path within rt.Fsys (no leading slash, valid for
-// fs.ValidPath). Conversion from an absolute path to an fs.FS path is
-// the caller's responsibility.
+// Path unification: callers (scopeResolver / knowledgeResolver) pass
+// Runtime.Fsys as the filesystem under search, so the real filesystem
+// from os.DirFS("/") and fstest.MapFS are treated equivalently. startDir
+// is the FsPath equivalent of the caller's absolute working directory;
+// the FsPath wrapper handles the "/-vs-." conventions.
 //
 // Marker-check order: markers are evaluated in slice order at each
-// directory, and the first existing one determines the match. This
-// function preserves the caller-supplied ordering so the caller controls
-// priority.
-func (r *scopeResolver) findUpwards(startDir string, markers []string) (string, error) {
+// directory, and the first existing one determines the match.
+func (r *scopeResolver) findUpwards(startDir FsPath, markers []string) (FsPath, bool, error) {
 	dir := startDir
-	if dir == "" {
-		dir = "."
-	}
 	for {
 		for _, m := range markers {
-			candidate := joinFsPath(dir, m)
-			if _, err := fs.Stat(r.rt.Fsys, candidate); err == nil {
-				return dir, nil
+			candidate := dir.Join(m)
+			if _, err := fs.Stat(r.rt.Fsys, candidate.String()); err == nil {
+				return dir, true, nil
 			}
 		}
-		if dir == "." {
-			return "", nil
-		}
-		parent := path.Dir(dir)
-		// path.Dir("foo") returns ".", path.Dir(".") returns ".".
-		if parent == dir {
-			return "", nil
+		parent, ok := dir.Parent()
+		if !ok {
+			return FsPath{}, false, nil
 		}
 		dir = parent
 	}
-}
-
-// joinFsPath joins dir and name into a fs.FS-friendly path. The root
-// directory ("." in fs.FS) is treated as the empty prefix so that
-// joinFsPath(".", ".knit") yields ".knit" (a valid fs.FS path) rather
-// than "./.knit" (which fs.Stat rejects).
-func joinFsPath(dir, name string) string {
-	if dir == "" || dir == "." {
-		return name
-	}
-	return dir + "/" + name
-}
-
-// absToFsPath converts an absolute filesystem path ("/foo/bar") into an
-// fs.FS-style path ("foo/bar"). The filesystem root ("/") maps to ".".
-// Relative inputs are returned unchanged so that tests can pass fs paths
-// directly.
-func absToFsPath(p string) string {
-	p = filepath.ToSlash(p)
-	if !strings.HasPrefix(p, "/") {
-		// already a relative fs path or empty
-		if p == "" {
-			return "."
-		}
-		return p
-	}
-	trimmed := strings.TrimPrefix(p, "/")
-	if trimmed == "" {
-		return "."
-	}
-	return trimmed
-}
-
-// fsPathToAbs is the inverse of absToFsPath. The fs root (".") maps to
-// "/", and any other fs path receives a leading "/".
-func fsPathToAbs(p string) string {
-	if p == "" || p == "." {
-		return "/"
-	}
-	return "/" + p
 }
