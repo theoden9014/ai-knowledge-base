@@ -46,7 +46,7 @@ body v2
 	cmd := NewUpdateCommand()
 	if err := runCommand(t, cmd, rt, []string{
 		"--scope=user", "--target=claude",
-		f.pack,
+		filepath.Join(f.knowledgeDir, f.pack),
 	}); err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -75,5 +75,28 @@ func TestUpdateCommand_Run_skipsTargetsWithoutPriorInstall(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "nothing to update") {
 		t.Errorf("expected warning in stderr: %q", stderr.String())
+	}
+}
+
+func TestUpdateCommand_Run_packNameRejectsLocalSource(t *testing.T) {
+	f := newCmdFixture(t)
+	rt, _, _ := f.runtime(t)
+	if err := runCommand(t, NewInstallCommand(), rt, []string{
+		"--scope=user", "--target=claude",
+		f.pack,
+	}); err != nil {
+		t.Fatalf("install: %v", err)
+	}
+
+	rt, _, _ = f.runtime(t)
+	err := runCommand(t, NewUpdateCommand(), rt, []string{
+		"--scope=user", "--target=claude",
+		f.pack,
+	})
+	if err == nil {
+		t.Fatalf("update err = nil, want local-source usage error")
+	}
+	if !strings.Contains(err.Error(), "installed from a local source") {
+		t.Errorf("error = %v, want local-source guidance", err)
 	}
 }

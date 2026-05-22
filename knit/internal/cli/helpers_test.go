@@ -112,6 +112,10 @@ func Test_buildFactory_scopeUser_doesNotResolveProjectRoot(t *testing.T) {
 // returning a minimal but loader-valid knowledge pack named "remote-p".
 // PackDir() in the stub should point at the pack subdirectory ("remote-p").
 func remotePackFS(packDir, packName string) fstest.MapFS {
+	return remotePackFSWithBody(packDir, packName, "body of remote skill a\n")
+}
+
+func remotePackFSWithBody(packDir, packName, body string) fstest.MapFS {
 	manifest := "pack: " + packName + "\n" +
 		"version: 0.1.0\n" +
 		"description: remote test pack\n" +
@@ -125,7 +129,7 @@ func remotePackFS(packDir, packName string) fstest.MapFS {
 		"name: " + packName + "-a\n" +
 		"description: skill a\n" +
 		"---\n" +
-		"body of remote skill a\n"
+		body
 	return fstest.MapFS{
 		packDir + "/manifest.yaml":     {Data: []byte(manifest)},
 		packDir + "/skills/a/SKILL.md": {Data: []byte(skill)},
