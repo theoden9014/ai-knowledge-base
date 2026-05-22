@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -16,6 +15,8 @@ import (
 // Semantics:
 //   - Re-distribute existing artifacts from the latest source by running
 //     "uninstall -> install" as a single transaction.
+//   - A bare pack name refreshes only packs installed from a recorded remote
+//     source. Local-source installs must be updated with an explicit path.
 //   - Targets with no existing Installation are skipped by this command.
 //
 // Rollback policy on failure:
@@ -43,12 +44,18 @@ func (c *updateCommand) Synopsis() string {
 func (c *updateCommand) Help() string {
 	return `usage: knit update <pack-or-path-or-url> [--scope=user|project] [--target=claude|codex|gemini|all]
 
-Re-distributes the named pack by uninstalling existing installations and
-installing freshly-built artifacts. Targets without any prior installation
-are skipped (use 'knit install' for first-time installs).
+Re-distributes an installed pack by uninstalling existing artifacts and
+installing freshly-built artifacts.
 
-<pack-or-path-or-url> accepts the same forms as 'knit install': a pack
-name, a local directory path, or a remote git URL.
+When a pack name is given, knit uses the remote URL recorded at install
+time. Packs installed from local sources must be updated with an explicit
+local path. Targets without any prior installation are skipped (use
+'knit install' for first-time installs).
+
+<pack-or-path-or-url> accepts:
+  - a pack name for remote-installed packs (e.g. "structure-behavior-design")
+  - a local directory path pointing directly at a pack directory
+  - a remote git URL
 `
 }
 
@@ -65,9 +72,11 @@ func (c *updateCommand) Flags() *flag.FlagSet {
 //
 // The <pack> argument is interpreted the same way as install and
 // supports both local pack names and remote URLs via [loadPackFromArg].
-// Prior installations are matched using [resolvedPack.Name]
-// (= Pack.Name = the `pack:` field in manifest.yaml), which allows the
-// same key to be used for both local and remote sources.
+// For a bare pack name, update first looks for a recorded remote source on
+// existing installations. Local-source installations are rejected so the user
+// must pass the source path explicitly. Prior installations are matched using
+// [resolvedPack.Name] (= Pack.Name = the `pack:` field in manifest.yaml),
+// which allows explicit local paths and remote URLs to use the same key.
 func (c *updateCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) error {
 	packArg, err := requirePackArg(fs)
 	if err != nil {
@@ -197,47 +206,33 @@ func (c *updateCommand) updateForTarget(
 	if err != nil {
 		return err
 	}
-
-	insts, err := lister.List(ctx, scope)
+	reinstaller, err := inventory.NewReinstaller(installer, uninstaller, lister)
 	if err != nil {
 		return err
-	}
-	matchingPriors := 0
-	for _, inst := range insts {
-		if !inst.Provenance.BelongsToPack(packName) {
-			continue
-		}
-		matchingPriors++
-		if err := uninstaller.Uninstall(ctx, inst); err != nil {
-			if errors.Is(err, inventory.ErrInstallationNotFound) {
-				continue
-			}
-			return fmt.Errorf("update/uninstall %s/%s: %w", target, inst.ID, err)
-		}
-	}
-	if matchingPriors == 0 {
-		_, _ = fmt.Fprintf(rt.Stderr, "warning: nothing to update for %s/%s (no prior installation of %q)\n", target, scope, packName)
-		return nil
 	}
 
 	artifacts, err := builder.Build(ctx, pack)
 	if err != nil {
 		return err
 	}
-	if len(artifacts) == 0 {
-		// Prior installations were already removed above (matchingPriors >0)
-		// but the new pack content has no artifacts for this target. Be
-		// explicit so the user sees this as an intentional skip, not a
-		// silent regression.
+	for i := range artifacts {
+		artifacts[i].SourceRef = ref
+	}
+
+	report, err := reinstaller.Reinstall(ctx, scope, packName, artifacts)
+	if err != nil {
+		return fmt.Errorf("update %s/%s: %w", target, scope, err)
+	}
+	switch {
+	case report.NoPriorInstallation:
+		_, _ = fmt.Fprintf(rt.Stderr, "warning: nothing to update for %s/%s (no prior installation of %q)\n", target, scope, packName)
+	case len(artifacts) == 0:
+		// Prior installations were already removed but the new pack
+		// content has no artifacts for this target. Surface the skip so
+		// the user sees it as intentional rather than a silent regression.
 		_, _ = fmt.Fprintf(rt.Stdout, "skipped %s/%s (no artifacts for this pack; prior installations removed)\n", target, scope)
-		return nil
+	default:
+		_, _ = fmt.Fprintf(rt.Stdout, "updated %d artifacts in %s/%s\n", report.InstalledCount, target, scope)
 	}
-	for _, art := range artifacts {
-		art.SourceRef = ref
-		if _, err := installer.Install(ctx, scope, art); err != nil {
-			return fmt.Errorf("update/install %s/%s: %w (re-run to recover)", target, art.Path, err)
-		}
-	}
-	_, _ = fmt.Fprintf(rt.Stdout, "updated %d artifacts in %s/%s\n", len(artifacts), target, scope)
 	return nil
 }
