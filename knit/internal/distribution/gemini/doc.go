@@ -85,36 +85,33 @@
 //
 // # Internal Design Aggregation Points
 //
-// The resolution rules for "(Scope, Artifact.Path) -> absolute path",
-// "(Scope) -> Inventory root", and "(Scope, InstallationID) -> absolute path
-// of the label sidecar" are centralized in the package-private type
-// pathResolver (pathresolver.go). Installer / Uninstaller / Lister are
-// expected to share the same *pathResolver instance, eliminating bugs where
-// root values diverge across the three roles.
+// The resolution rules for "(Scope, Artifact.Path) -> absolute path" and
+// "(Scope) -> Inventory root" are centralized by buildResolver in
+// path_policy.go, which constructs the target-neutral inventory.PathResolver
+// used by Installer / Uninstaller / Lister.
 //
 // # Label Persistence
 //
 // Labels are not embedded in the artifact file itself. They are managed in a
-// dedicated sidecar directory under the Inventory root, using the same
-// approach as the claude target:
+// dedicated knit metadata directory selected by the CLI layer:
 //
-//   - <inventory root>/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeUser:    $HOME/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeProject: <project root>/.knit/labels/<target>/<scope>/<installation id>.json
 //
 // Each sidecar file stores Label, Provenance, and the minimum metadata needed,
 // such as the corresponding relative path in the Inventory.
-// Gemini CLI does not consult the `.knit/` subtree, so this coexists fully
-// with existing Gemini CLI conventions.
+// Gemini CLI does not consult knit's metadata tree, so this coexists fully with
+// existing Gemini CLI conventions.
 //
 // Reasons for choosing the sidecar approach, shared with the claude target:
 //
 //   - xattr works on both macOS and Linux, but is brittle on NFS / FAT and may
 //     interfere with the user's dotfiles synchronization.
-//   - Managing metadata in a separate directory (outside `~/.gemini`) would
-//     separate the artifact read by Gemini CLI from its Label, making it hard
-//     to track deletions by external tools.
-//   - With sidecars (the `.knit/` subtree under the same root), the entire
-//     Inventory stays under one `~/.gemini/` tree, making delete / move
-//     tracking straightforward.
+//   - Keeping knit-managed metadata under $HOME/.knit / <project>/.knit avoids
+//     writing bookkeeping files into tool-owned directories such as ~/.gemini.
+//   - Storing the relative artifact path in the sidecar preserves enough
+//     information to detect and ignore orphan labels when artifacts are removed
+//     externally.
 //
 // # Scope Handling
 //

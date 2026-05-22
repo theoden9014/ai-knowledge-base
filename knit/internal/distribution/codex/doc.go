@@ -86,24 +86,25 @@
 // # Label Persistence
 //
 // Labels are not embedded into artifact files. Instead they are stored in a
-// dedicated sidecar directory under the inventory root:
+// dedicated knit metadata directory selected by the CLI layer:
 //
-//   - <inventory root>/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeUser:    $HOME/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeProject: <project root>/.knit/labels/<target>/<scope>/<installation id>.json
 //
 // Each sidecar stores the minimal metadata required to reconstruct an
 // installation: Label, Provenance, and the corresponding relative inventory
-// path. Codex CLI ignores the `.knit/` subtree, so this layout coexists cleanly
-// with Codex's native conventions.
+// path. Codex CLI ignores knit's metadata tree, so this layout coexists
+// cleanly with Codex's native conventions.
 //
 // The reasons for using a sidecar model are the same as in the claude target:
 //
 //   - xattrs work on both macOS and Linux, but they are fragile on filesystems
 //     such as NFS or FAT and can interfere with dotfiles synchronization.
-//   - Managing labels outside the inventory root makes it hard to track moves
-//     or deletions of the Codex configuration itself.
-//   - Sidecars under the same root keep the whole inventory self-contained
-//     inside a single `~/.codex/` tree, making moves and deletions easy to
-//     follow.
+//   - Keeping knit-managed metadata under $HOME/.knit / <project>/.knit avoids
+//     writing bookkeeping files into tool-owned directories such as ~/.codex.
+//   - Storing the relative artifact path in the sidecar preserves enough
+//     information to detect and ignore orphan labels when artifacts are removed
+//     externally.
 //
 // # Scope Handling
 //

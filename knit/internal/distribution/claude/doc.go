@@ -60,25 +60,25 @@
 // # Label Persistence Strategy
 //
 // Labels are not embedded in artifact files themselves; instead they are
-// managed in a dedicated sidecar directory under the Inventory root:
+// managed in a dedicated knit metadata directory selected by the CLI layer:
 //
-//   - <inventory root>/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeUser:    $HOME/.knit/labels/<target>/<scope>/<installation id>.json
+//   - ScopeProject: <project root>/.knit/labels/<target>/<scope>/<installation id>.json
 //
 // Each sidecar file stores minimal metadata such as Label, Provenance, and the
 // corresponding relative path in Inventory.
-// Claude Code does not inspect the .knit/ subtree, so this coexists cleanly
-// with Claude Code's existing conventions.
+// Claude Code does not inspect the knit metadata tree, so this coexists
+// cleanly with Claude Code's existing conventions.
 //
 // Reasons for adopting the sidecar approach:
 //
 //   - xattr works on both macOS and Linux, but is fragile on NFS / FAT and can
 //     interfere with users' dotfiles synchronization.
-//   - Managing labels in a separate directory (outside ~/.claude) separates the
-//     artifact Claude Code reads from the label location, making it hard to
-//     track deletions by external tools.
-//   - With sidecars (the .knit/ subtree under the same root), the entire
-//     Inventory stays under a single ~/.claude/ tree, making deletions and
-//     moves easier to follow.
+//   - Keeping knit-managed metadata under $HOME/.knit / <project>/.knit avoids
+//     writing bookkeeping files into tool-owned directories such as ~/.claude.
+//   - Storing the relative artifact path in the sidecar preserves enough
+//     information to detect and ignore orphan labels when artifacts are removed
+//     externally.
 //
 // # Scope Handling
 //
