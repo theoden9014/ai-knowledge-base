@@ -24,8 +24,10 @@ func TestListCommand_Run_emptyInventory(t *testing.T) {
 		t.Fatalf("Run err: %v", err)
 	}
 	out := stdout.String()
-	if !strings.Contains(out, "TARGET") || !strings.Contains(out, "SOURCE_ENTRIES") {
-		t.Errorf("expected header in stdout, got:\n%s", out)
+	for _, col := range []string{"TARGET", "SCOPE", "PACK", "ENTRY_ID", "PATH"} {
+		if !strings.Contains(out, col) {
+			t.Errorf("expected header column %q in stdout, got:\n%s", col, out)
+		}
 	}
 }
 

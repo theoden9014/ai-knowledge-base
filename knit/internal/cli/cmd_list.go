@@ -7,6 +7,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
 // listCommand implements the `knit list` command.
@@ -33,7 +35,12 @@ func (c *listCommand) Help() string {
 	return `usage: knit list [--scope=user|project] [--target=claude|codex|gemini|all]
 
 Lists Installations recorded under the requested scope/target inventories.
-Columns: TARGET / SCOPE / ID / SOURCE_ENTRIES.
+Columns: TARGET / SCOPE / PACK / ENTRY_ID / PATH.
+  - PACK is the knowledge pack name (e.g., "structure-behavior-design").
+  - ENTRY_ID is the neutral <pack>.<kind>.<name> identifier; if an Installation
+    aggregates multiple Entries (such as a folded rule file), the values are
+    comma-separated.
+  - PATH is the artifact placement path relative to the Inventory root.
 `
 }
 
@@ -59,8 +66,9 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 	type row struct {
 		target  string
 		scope   string
-		id      string
-		entries string
+		pack    string
+		entryID string
+		path    string
 	}
 	var rows []row
 	var failures []TargetFailure
@@ -79,8 +87,9 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 			rows = append(rows, row{
 				target:  string(inst.Label.Target),
 				scope:   string(inst.Label.Scope),
-				id:      string(inst.ID),
-				entries: strings.Join(inst.Provenance.SourceEntryIDs, ","),
+				pack:    packsFromEntryIDs(inst.Provenance.SourceEntryIDs),
+				entryID: strings.Join(inst.Provenance.SourceEntryIDs, ","),
+				path:    string(inst.ID),
 			})
 		}
 	}
@@ -91,12 +100,36 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 		if rows[i].scope != rows[j].scope {
 			return rows[i].scope < rows[j].scope
 		}
-		return rows[i].id < rows[j].id
+		if rows[i].pack != rows[j].pack {
+			return rows[i].pack < rows[j].pack
+		}
+		return rows[i].entryID < rows[j].entryID
 	})
 
-	_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-40s %s\n", "TARGET", "SCOPE", "ID", "SOURCE_ENTRIES")
+	_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %-60s %s\n", "TARGET", "SCOPE", "PACK", "ENTRY_ID", "PATH")
 	for _, r := range rows {
-		_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-40s %s\n", r.target, r.scope, r.id, r.entries)
+		_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %-60s %s\n", r.target, r.scope, r.pack, r.entryID, r.path)
 	}
 	return aggregateOrSingle(len(targets), failures)
+}
+
+// packsFromEntryIDs extracts the pack component from each entry id, drops
+// duplicates while preserving first-occurrence order, and joins the result
+// with commas. Malformed entry ids are skipped.
+func packsFromEntryIDs(ids []string) string {
+	seen := make(map[string]struct{}, len(ids))
+	var packs []string
+	for _, raw := range ids {
+		eid, err := source.NewEntryID(raw)
+		if err != nil {
+			continue
+		}
+		p := eid.Pack()
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		packs = append(packs, p)
+	}
+	return strings.Join(packs, ",")
 }
