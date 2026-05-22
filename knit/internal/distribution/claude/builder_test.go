@@ -12,21 +12,12 @@ import (
 )
 
 func TestNewBuilder(t *testing.T) {
-	tests := []struct {
-		name string
-		want *Builder
-	}{
-		{
-			name: "constructor returns non-nil Builder",
-			want: &Builder{},
-		},
+	got := NewBuilder()
+	if got == nil {
+		t.Fatal("NewBuilder() returned nil")
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewBuilder(); !cmp.Equal(tt.want, got) {
-				t.Errorf("NewBuilder() = %v, want %v\ndiff=%s", got, tt.want, cmp.Diff(tt.want, got))
-			}
-		})
+	if got.Target() != Target {
+		t.Errorf("Builder.Target() = %q, want %q", got.Target(), Target)
 	}
 }
 
@@ -38,7 +29,7 @@ func TestBuilder_Target(t *testing.T) {
 	}{
 		{
 			name: "returns claude.Target",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			want: Target,
 		},
 	}
@@ -68,7 +59,7 @@ func TestBuilder_Build(t *testing.T) {
 	}{
 		{
 			name: "empty pack returns no artifacts",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -84,7 +75,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "skill entry produces SKILL.md",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -121,7 +112,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "skill entry merges tools.claude.frontmatter",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -167,7 +158,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "agent entry includes skills derived from uses_skills",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -209,7 +200,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "prompt entry produces commands file without frontmatter",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -241,7 +232,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "rule entries are concatenated in manifest order with H1/H2 headings, body newline padding and one blank line between entries",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -292,7 +283,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "rule entry with tools.claude.frontmatter returns ErrFrontmatterMergeConflict",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -319,7 +310,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "prompt entry with tools.claude.frontmatter returns ErrFrontmatterMergeConflict",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
@@ -346,7 +337,7 @@ func TestBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "entry disabled for claude is skipped",
-			b:    &Builder{},
+			b:    NewBuilder(),
 			args: args{
 				ctx: context.Background(),
 				pack: &source.Pack{
