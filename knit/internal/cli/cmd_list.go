@@ -7,8 +7,6 @@ import (
 	"io"
 	"sort"
 	"strings"
-
-	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
 
 // listCommand implements the `knit list` command.
@@ -87,7 +85,7 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 			rows = append(rows, row{
 				target:  string(inst.Label.Target),
 				scope:   string(inst.Label.Scope),
-				pack:    packsFromEntryIDs(inst.Provenance.SourceEntryIDs),
+				pack:    strings.Join(inst.Provenance.Packs(), ","),
 				entryID: strings.Join(inst.Provenance.SourceEntryIDs, ","),
 				path:    string(inst.ID),
 			})
@@ -111,25 +109,4 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 		_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %-60s %s\n", r.target, r.scope, r.pack, r.entryID, r.path)
 	}
 	return aggregateOrSingle(len(targets), failures)
-}
-
-// packsFromEntryIDs extracts the pack component from each entry id, drops
-// duplicates while preserving first-occurrence order, and joins the result
-// with commas. Malformed entry ids are skipped.
-func packsFromEntryIDs(ids []string) string {
-	seen := make(map[string]struct{}, len(ids))
-	var packs []string
-	for _, raw := range ids {
-		eid, err := source.NewEntryID(raw)
-		if err != nil {
-			continue
-		}
-		p := eid.Pack()
-		if _, ok := seen[p]; ok {
-			continue
-		}
-		seen[p] = struct{}{}
-		packs = append(packs, p)
-	}
-	return strings.Join(packs, ",")
 }

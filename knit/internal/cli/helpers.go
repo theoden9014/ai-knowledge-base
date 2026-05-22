@@ -299,29 +299,6 @@ func loadPackFromArg(ctx context.Context, rt *Runtime, arg string) (*resolvedPac
 	}
 }
 
-// neutralIDPack extracts the <pack> part from a neutral entry ID of the
-// form "<pack>.<kind>.<entry>". Returns the empty string when the ID does
-// not match the expected pattern.
-func neutralIDPack(id string) string {
-	dot := strings.IndexByte(id, '.')
-	if dot <= 0 {
-		return ""
-	}
-	return id[:dot]
-}
-
-// installationBelongsToPack reports whether the given Installation was
-// produced from the given pack name, using the SourceEntryIDs that the
-// Lister restored from the sidecar.
-func installationBelongsToPack(inst inventory.Installation, pack string) bool {
-	for _, id := range inst.Provenance.SourceEntryIDs {
-		if neutralIDPack(id) == pack {
-			return true
-		}
-	}
-	return false
-}
-
 // writeArtifactToDir writes art under outDir using art.Path as a relative
 // suffix. Parent directories are created with 0o755 and files with 0o644
 // (or art.Mode when non-zero) — mirroring distribution Installer defaults.

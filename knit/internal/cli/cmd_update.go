@@ -128,7 +128,7 @@ func (c *updateCommand) updateForTarget(
 	}
 	matchingPriors := 0
 	for _, inst := range insts {
-		if !installationBelongsToPack(inst, packName) {
+		if !inst.Provenance.BelongsToPack(packName) {
 			continue
 		}
 		matchingPriors++

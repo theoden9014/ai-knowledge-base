@@ -172,7 +172,7 @@ func (c *uninstallCommand) uninstallForTarget(
 	}
 	removed := 0
 	for _, inst := range installations {
-		if !installationBelongsToPack(inst, packName) {
+		if !inst.Provenance.BelongsToPack(packName) {
 			continue
 		}
 		if err := uninstaller.Uninstall(ctx, inst); err != nil {

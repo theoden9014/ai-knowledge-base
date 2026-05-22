@@ -27,6 +27,42 @@ type Provenance struct {
 	SourceEntryIDs []string
 }
 
+// Packs returns the distinct pack names referenced by SourceEntryIDs, in
+// first-occurrence order. Malformed entry ids are skipped silently so a
+// single bad sidecar never hides the rest.
+func (p Provenance) Packs() []string {
+	seen := make(map[string]struct{}, len(p.SourceEntryIDs))
+	var packs []string
+	for _, raw := range p.SourceEntryIDs {
+		eid, err := source.NewEntryID(raw)
+		if err != nil {
+			continue
+		}
+		name := eid.Pack()
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		packs = append(packs, name)
+	}
+	return packs
+}
+
+// BelongsToPack reports whether any entry in SourceEntryIDs comes from
+// pack.
+func (p Provenance) BelongsToPack(pack string) bool {
+	for _, raw := range p.SourceEntryIDs {
+		eid, err := source.NewEntryID(raw)
+		if err != nil {
+			continue
+		}
+		if eid.Pack() == pack {
+			return true
+		}
+	}
+	return false
+}
+
 // Installation represents a single entity placed in the Inventory for a given
 // (Scope, Target). It carries the Artifact contents, a Label indicating that
 // it is managed by knit, and Provenance describing its origin.
