@@ -16,14 +16,14 @@ func (promptRenderer) Kind() source.Kind { return source.KindPrompt }
 
 // Render returns the prompt artifact or ErrFrontmatterMergeConflict when
 // the entry asks for frontmatter that the prompt format cannot represent.
-func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, error) {
+func (promptRenderer) Render(e *source.Entry, _ *source.Pack) ([]source.Artifact, error) {
 	if e.HasFrontmatterFor(Target) {
-		return source.Artifact{}, fmt.Errorf("%w: kind=prompt entry=%s", ErrFrontmatterMergeConflict, e.ID)
+		return nil, fmt.Errorf("%w: kind=prompt entry=%s", ErrFrontmatterMergeConflict, e.ID)
 	}
-	return source.Artifact{
+	return []source.Artifact{{
 		Target:         Target,
 		Path:           "commands/" + e.Name + ".md",
 		Content:        source.EnsureTrailingNewline(e.Body),
 		SourceEntryIDs: []string{e.ID},
-	}, nil
+	}}, nil
 }

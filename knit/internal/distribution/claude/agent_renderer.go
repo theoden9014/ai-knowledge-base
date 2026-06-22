@@ -12,7 +12,7 @@ func (agentRenderer) Kind() source.Kind { return source.KindAgent }
 // frontmatter `skills:` array using the "<pack>-<entry>" short form.
 // tools.claude.frontmatter overrides any same-name keys produced from
 // neutral metadata.
-func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, error) {
+func (agentRenderer) Render(e *source.Entry, _ *source.Pack) ([]source.Artifact, error) {
 	fm := map[string]any{
 		"name":        e.Name,
 		"description": e.Description,
@@ -29,12 +29,12 @@ func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 	}
 	content, err := frontmatterRenderer.Render(fm, e.Body)
 	if err != nil {
-		return source.Artifact{}, err
+		return nil, err
 	}
-	return source.Artifact{
+	return []source.Artifact{{
 		Target:         Target,
 		Path:           "agents/" + e.Name + ".md",
 		Content:        content,
 		SourceEntryIDs: []string{e.ID},
-	}, nil
+	}}, nil
 }

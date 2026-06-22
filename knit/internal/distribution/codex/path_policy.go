@@ -2,6 +2,7 @@ package codex
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/inventory"
@@ -14,7 +15,7 @@ import (
 //
 // Accepted artifact paths:
 //   - AGENTS.md
-//   - skills/<name>/SKILL.md
+//   - skills/<name>/SKILL.md and any sibling under skills/<name>/...
 //   - agents/<name>.toml
 //   - prompts/<name>.md (no subdirectories)
 type pathPolicy struct{}
@@ -54,10 +55,16 @@ func validateAgentsMd(p source.ArtifactPath) error {
 	return nil
 }
 
-// validateSkillPath requires `skills/<name>/SKILL.md` exactly.
+// validateSkillPath accepts `skills/<name>/<...>`. The name segment must
+// be non-empty and there must be at least one more segment beneath it so
+// the bare directory itself is rejected. Sub-paths beyond SKILL.md are
+// allowed so a skill can carry sibling assets (scripts/, references/, ...).
 func validateSkillPath(p source.ArtifactPath) error {
 	parts := strings.Split(p.String(), "/")
-	if len(parts) != 3 || parts[1] == "" || parts[2] != "SKILL.md" {
+	if len(parts) < 3 || parts[1] == "" {
+		return source.ErrInvalidArtifactPath
+	}
+	if slices.Contains(parts[2:], "") {
 		return source.ErrInvalidArtifactPath
 	}
 	return nil

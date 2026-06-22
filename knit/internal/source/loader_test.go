@@ -37,7 +37,7 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
   - id: p.agent.x
     path: agents/x.md
 `)},
@@ -78,6 +78,10 @@ body of agent x
 	}
 
 	enabledTrue := true
+	wantSkillMeta, err := NewSkillMeta("skills/a", nil)
+	if err != nil {
+		t.Fatalf("NewSkillMeta: %v", err)
+	}
 	wantPack := &Pack{
 		Name:         "p",
 		Version:      "0.1.0",
@@ -95,8 +99,9 @@ body of agent x
 						Frontmatter: map[string]any{"foo": "bar"},
 					},
 				},
-				Path: "skills/a/SKILL.md",
-				Body: []byte("body of skill a\n"),
+				Path:  "skills/a",
+				Body:  []byte("body of skill a\n"),
+				Skill: wantSkillMeta,
 			},
 			{
 				ID:          "p.agent.x",
@@ -109,7 +114,7 @@ body of agent x
 			},
 		},
 	}
-	if diff := cmp.Diff(wantPack, pack); diff != "" {
+	if diff := cmp.Diff(wantPack, pack, cmp.AllowUnexported(SkillMeta{}, SkillAsset{})); diff != "" {
 		t.Errorf("Pack mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -138,7 +143,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
@@ -146,14 +151,28 @@ entries:
 			wantKind: ErrSchemaViolation,
 		},
 		{
-			name: "entry file missing",
+			name: "skill path missing",
 			fsys: fstest.MapFS{
 				"p/manifest.yaml": {Data: []byte(`pack: p
 version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
+`)},
+			},
+			packDir:  "p",
+			wantKind: ErrSkillPathNotFound,
+		},
+		{
+			name: "agent file missing surfaces ErrEntryNotFound",
+			fsys: fstest.MapFS{
+				"p/manifest.yaml": {Data: []byte(`pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.agent.x
+    path: agents/x.md
 `)},
 			},
 			packDir:  "p",
@@ -167,7 +186,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: PackA\ndescription: bad name\n---\nbody\n")},
 			},
@@ -182,7 +201,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.b\nkind: skill\nname: p-b\ndescription: d\n---\nbody\n")},
 			},
@@ -197,9 +216,9 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
   - id: p.skill.a
-    path: skills/a2/SKILL.md
+    path: skills/a2
 `)},
 				"p/skills/a/SKILL.md":  {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 				"p/skills/a2/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
@@ -215,7 +234,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skil\nname: p-a\ndescription: d\n---\nbody\n")},
 			},
@@ -230,7 +249,7 @@ version: 0.1.0
 description: d
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
 			},

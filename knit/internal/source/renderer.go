@@ -10,17 +10,29 @@ import (
 // Kind has no renderer or aggregator registered for the target.
 var ErrUnsupportedKind = errors.New("source: unsupported kind")
 
-// KindRenderer converts a single Entry into a target-specific Artifact.
-// Implementations live alongside each distribution target (claude / codex /
-// gemini). The interface itself stays target-agnostic so the per-kind
-// dispatch logic can be shared across targets.
+// KindRenderer converts a single Entry into one or more target-specific
+// Artifacts. Implementations live alongside each distribution target
+// (claude / codex / gemini). The interface itself stays target-agnostic
+// so the per-kind dispatch logic can be shared across targets.
+//
+// Render must return a non-empty slice on success: returning (nil, nil) or
+// an empty slice with a nil error is a contract violation, because an
+// entry that should produce no artifacts (for example because it is not
+// enabled for this target) is filtered out by Pack.EntriesFor before
+// reaching the renderer.
+//
+// When a renderer emits multiple artifacts (e.g. a skill body plus its
+// sibling assets), every returned Artifact must carry the same
+// SourceEntryIDs slice so downstream Provenance.BelongsToPack lookups can
+// treat the set as a unit.
 type KindRenderer interface {
 	// Kind reports the entry kind this renderer handles.
 	Kind() Kind
 
-	// Render produces an Artifact for entry. The pack argument is provided
-	// for renderers that need pack-level metadata (most do not).
-	Render(entry *Entry, pack *Pack) (Artifact, error)
+	// Render produces one or more Artifacts for entry. The pack argument
+	// is provided for renderers that need pack-level metadata (most do
+	// not).
+	Render(entry *Entry, pack *Pack) ([]Artifact, error)
 }
 
 // RuleAggregator folds every KindRule entry in a pack into a single
@@ -95,11 +107,14 @@ func (r *RendererRegistry) Build(ctx context.Context, pack *Pack) ([]Artifact, e
 		if !ok {
 			return nil, fmt.Errorf("%w: kind=%s target=%s", ErrUnsupportedKind, e.Kind, r.target)
 		}
-		art, err := renderer.Render(e, pack)
+		arts, err := renderer.Render(e, pack)
 		if err != nil {
 			return nil, err
 		}
-		artifacts = append(artifacts, art)
+		if len(arts) == 0 {
+			return nil, fmt.Errorf("%w: renderer returned no artifacts: kind=%s entry=%s target=%s", ErrUnsupportedKind, e.Kind, e.ID, r.target)
+		}
+		artifacts = append(artifacts, arts...)
 	}
 	if len(ruleBuf) > 0 {
 		if r.aggregator == nil {
