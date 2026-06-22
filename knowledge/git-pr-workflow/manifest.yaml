@@ -1,0 +1,16 @@
+pack: git-pr-workflow
+version: 0.1.0
+description: |
+  A knowledge pack for the git-to-PR contribution flow: writing Conventional
+  Commits, opening pull requests from a project template, and addressing PR
+  review feedback comment by comment.
+
+default_tools: [claude, codex, gemini]
+
+entries:
+  - id: git-pr-workflow.skill.git-commit
+    path: skills/git-commit
+  - id: git-pr-workflow.skill.pr-create
+    path: skills/pr-create
+  - id: git-pr-workflow.skill.pr-review-fix
+    path: skills/pr-review-fix
