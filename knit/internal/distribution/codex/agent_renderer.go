@@ -12,7 +12,7 @@ type agentRenderer struct{}
 
 func (agentRenderer) Kind() source.Kind { return source.KindAgent }
 
-func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, error) {
+func (agentRenderer) Render(e *source.Entry, _ *source.Pack) ([]source.Artifact, error) {
 	table := map[string]any{
 		"name":                   e.Name,
 		"description":            e.Description,
@@ -23,12 +23,12 @@ func (agentRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, e
 	}
 	buf, err := toml.Marshal(table)
 	if err != nil {
-		return source.Artifact{}, fmt.Errorf("codex: marshal agent toml for %s: %w", e.ID, err)
+		return nil, fmt.Errorf("codex: marshal agent toml for %s: %w", e.ID, err)
 	}
-	return source.Artifact{
+	return []source.Artifact{{
 		Target:         Target,
 		Path:           fmt.Sprintf("agents/%s.toml", e.Name),
 		Content:        buf,
 		SourceEntryIDs: []string{e.ID},
-	}, nil
+	}}, nil
 }

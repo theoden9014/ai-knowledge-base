@@ -37,7 +37,7 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `
 	skill := `---
 id: p.skill.a

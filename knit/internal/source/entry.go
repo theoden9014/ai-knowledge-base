@@ -38,8 +38,20 @@ type Entry struct {
 	// runtime checks against Kind.
 	Agent *AgentMeta
 
-	// Path is the path of the source markdown file relative to the pack
-	// root (e.g. "skills/orchestrator.md").
+	// Skill carries kind-specific metadata that is only meaningful when
+	// Kind is KindSkill. It pairs the skill root (a pack-relative
+	// directory) with the sibling assets collected from that directory.
+	// For every other Kind this field is nil. Skill renderers must consume
+	// SkillMeta.Root rather than Entry.Path; the latter is kept as a
+	// compatibility copy of SkillMeta.Root.
+	Skill *SkillMeta
+
+	// Path is the pack-relative location of the source for this entry.
+	// For agent / rule / prompt entries it is the entry's markdown file
+	// (e.g. "agents/reviewer.md"). For skill entries it is the skill
+	// root directory (e.g. "skills/orchestrator"), carrying the same
+	// value as Skill.Root() for compatibility with callers that read
+	// Entry.Path directly.
 	Path string
 
 	// Body is the markdown body of the entry, with the YAML frontmatter

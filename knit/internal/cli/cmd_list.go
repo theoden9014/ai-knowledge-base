@@ -33,12 +33,11 @@ func (c *listCommand) Help() string {
 	return `usage: knit list [--scope=user|project] [--target=claude|codex|gemini|all]
 
 Lists Installations recorded under the requested scope/target inventories.
-Columns: TARGET / SCOPE / PACK / ENTRY_ID / PATH.
+Columns: TARGET / SCOPE / PACK / ENTRY_ID.
   - PACK is the knowledge pack name (e.g., "structure-behavior-design").
   - ENTRY_ID is the neutral <pack>.<kind>.<name> identifier; if an Installation
     aggregates multiple Entries (such as a folded rule file), the values are
     comma-separated.
-  - PATH is the artifact placement path relative to the Inventory root.
 `
 }
 
@@ -66,7 +65,6 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 		scope   string
 		pack    string
 		entryID string
-		path    string
 	}
 	var rows []row
 	var failures []TargetFailure
@@ -87,7 +85,6 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 				scope:   string(inst.Label.Scope),
 				pack:    strings.Join(inst.Provenance.Packs(), ","),
 				entryID: strings.Join(inst.Provenance.SourceEntryIDs, ","),
-				path:    string(inst.ID),
 			})
 		}
 	}
@@ -104,9 +101,9 @@ func (c *listCommand) Run(ctx context.Context, rt *Runtime, fs *flag.FlagSet) er
 		return rows[i].entryID < rows[j].entryID
 	})
 
-	_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %-60s %s\n", "TARGET", "SCOPE", "PACK", "ENTRY_ID", "PATH")
+	_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %s\n", "TARGET", "SCOPE", "PACK", "ENTRY_ID")
 	for _, r := range rows {
-		_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %-60s %s\n", r.target, r.scope, r.pack, r.entryID, r.path)
+		_, _ = fmt.Fprintf(rt.Stdout, "%-10s %-8s %-30s %s\n", r.target, r.scope, r.pack, r.entryID)
 	}
 	return aggregateOrSingle(len(targets), failures)
 }

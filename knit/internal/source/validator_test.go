@@ -33,7 +33,7 @@ description: test pack
 default_tools: [claude]
 entries:
   - id: structure-behavior-design.skill.orchestrator
-    path: skills/orchestrator/SKILL.md
+    path: skills/orchestrator
 `)},
 			wantErr: false,
 		},
@@ -44,7 +44,7 @@ version: 0.1.0
 description: test pack
 entries:
   - id: p.skill.a
-    path: skills/a/SKILL.md
+    path: skills/a
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
@@ -57,7 +57,7 @@ version: 0.1.0
 description: test pack
 entries:
   - id: structure-behavior-design.skill.orchestrator
-    path: skills/orchestrator/SKILL.md
+    path: skills/orchestrator
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
@@ -88,7 +88,59 @@ description: d
 unknown_field: surprise
 entries:
   - id: p.skill.a
+    path: skills/a
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "legacy skill path with SKILL.md is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.skill.a
     path: skills/a/SKILL.md
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "skill path with trailing slash is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.skill.a
+    path: skills/a/
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "agent path as directory is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.agent.x
+    path: agents/x
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "skill id with agent path shape is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.skill.a
+    path: agents/a.md
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,

@@ -49,10 +49,59 @@
         },
         "path": {
           "type": "string",
-          "description": "Path of the entry file relative to the pack root. Skill entries use a per-skill directory containing SKILL.md so the skill can carry sibling assets (scripts/, references/, ...) alongside the body; other kinds remain single files.",
-          "pattern": "^(skills/[a-z0-9]+(-[a-z0-9]+)*/SKILL\\.md|(agents|rules|prompts)/[a-z0-9]+(-[a-z0-9]+)*\\.md)$"
+          "description": "Path of the entry source relative to the pack root. Skill entries point at a per-skill directory (e.g. skills/orchestrator) so the directory can carry the SKILL.md body together with sibling assets (scripts/, references/, ...). agent/rule/prompt entries point at a single markdown file."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.skill\\." } }
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "pattern": "^skills/[a-z0-9]+(-[a-z0-9]+)*$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.agent\\." } }
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "pattern": "^agents/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.rule\\." } }
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "pattern": "^rules/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.prompt\\." } }
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "pattern": "^prompts/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -122,7 +122,7 @@ func remotePackFSWithBody(packDir, packName, body string) fstest.MapFS {
 		"default_tools: [claude]\n" +
 		"entries:\n" +
 		"  - id: " + packName + ".skill.a\n" +
-		"    path: skills/a/SKILL.md\n"
+		"    path: skills/a\n"
 	skill := "---\n" +
 		"id: " + packName + ".skill.a\n" +
 		"kind: skill\n" +

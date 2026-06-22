@@ -10,7 +10,7 @@ type promptRenderer struct{}
 
 func (promptRenderer) Kind() source.Kind { return source.KindPrompt }
 
-func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, error) {
+func (promptRenderer) Render(e *source.Entry, _ *source.Pack) ([]source.Artifact, error) {
 	fm := map[string]any{
 		"description": e.Description,
 	}
@@ -19,12 +19,12 @@ func (promptRenderer) Render(e *source.Entry, _ *source.Pack) (source.Artifact, 
 	}
 	content, err := frontmatterRenderer.Render(fm, e.Body)
 	if err != nil {
-		return source.Artifact{}, err
+		return nil, err
 	}
-	return source.Artifact{
+	return []source.Artifact{{
 		Target:         Target,
 		Path:           fmt.Sprintf("prompts/%s.md", e.Name),
 		Content:        content,
 		SourceEntryIDs: []string{e.ID},
-	}, nil
+	}}, nil
 }

@@ -95,33 +95,47 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 		}
 		seen[me.ID] = struct{}{}
 
-		entryPath := path.Join(packDir, me.Path)
-		raw, err := fs.ReadFile(fsys, entryPath)
+		// skill entries point at a directory whose body is the fixed
+		// SKILL.md file; every other kind points at a single markdown
+		// file. We pick the resolver accordingly and, for skills, also
+		// collect sibling assets that live alongside SKILL.md.
+		isSkill := kindFromManifestEntryID(me.ID) == KindSkill
+		var (
+			bodyPath string
+			assets   []SkillAsset
+			err      error
+		)
+		if isSkill {
+			bodyPath, assets, err = resolveSkillEntrySource(fsys, packDir, me)
+		} else {
+			bodyPath, err = resolveFileEntrySource(fsys, packDir, me)
+		}
 		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil, info, fmt.Errorf("%w: %s", ErrEntryNotFound, entryPath)
-			}
-			return nil, info, fmt.Errorf("source: read %s: %w", entryPath, err)
+			return nil, info, err
+		}
+		raw, err := fs.ReadFile(fsys, bodyPath)
+		if err != nil {
+			return nil, info, fmt.Errorf("source: read %s: %w", bodyPath, err)
 		}
 
 		fmBytes, body, err := splitFrontmatter(raw)
 		if err != nil {
-			return nil, info, fmt.Errorf("source: %s: %w", entryPath, err)
+			return nil, info, fmt.Errorf("source: %s: %w", bodyPath, err)
 		}
 
 		if err := l.validator.ValidateEntryFrontmatter(fmBytes); err != nil {
-			return nil, info, fmt.Errorf("source: %s: %w", entryPath, err)
+			return nil, info, fmt.Errorf("source: %s: %w", bodyPath, err)
 		}
 
 		var er entryRaw
 		if err := yaml.Unmarshal(fmBytes, &er); err != nil {
-			return nil, info, fmt.Errorf("source: parse %s: %w", entryPath, err)
+			return nil, info, fmt.Errorf("source: parse %s: %w", bodyPath, err)
 		}
 
 		if er.ID != me.ID {
 			return nil, info, fmt.Errorf(
 				"%w: manifest=%s frontmatter=%s (at %s)",
-				ErrIDMismatch, me.ID, er.ID, entryPath,
+				ErrIDMismatch, me.ID, er.ID, bodyPath,
 			)
 		}
 
@@ -142,6 +156,13 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 		}
 		if Kind(er.Kind) == KindAgent && len(er.UsesSkills) > 0 {
 			entry.Agent = &AgentMeta{UsesSkills: er.UsesSkills}
+		}
+		if Kind(er.Kind) == KindSkill {
+			meta, mErr := NewSkillMeta(me.Path, assets)
+			if mErr != nil {
+				return nil, info, fmt.Errorf("source: build skill meta %q: %w", me.Path, mErr)
+			}
+			entry.Skill = meta
 		}
 		entries = append(entries, entry)
 	}

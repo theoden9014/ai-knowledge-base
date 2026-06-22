@@ -36,4 +36,50 @@ var (
 	// knowledge/" (ErrManifestNotFound after a path is constructed)
 	// from "the directory you typed does not exist on disk".
 	ErrPackDirNotFound = errors.New("source: pack directory not found")
+
+	// ErrSkillResolution is the umbrella sentinel that matches any
+	// failure encountered while resolving a skill entry's root directory
+	// against the source filesystem. The three concrete failures below
+	// (ErrSkillPathNotFound / ErrSkillPathNotDirectory /
+	// ErrSkillBodyNotFound) all satisfy errors.Is(err, ErrSkillResolution).
+	ErrSkillResolution = errors.New("source: skill resolution failed")
+
+	// ErrSkillPathNotFound indicates that the directory referenced by a
+	// skill entry's manifest path does not exist on the source filesystem.
+	ErrSkillPathNotFound = newSkillResolutionError("source: skill path not found")
+
+	// ErrSkillPathNotDirectory indicates that the manifest path of a skill
+	// entry refers to a file rather than a directory.
+	ErrSkillPathNotDirectory = newSkillResolutionError("source: skill path is not a directory")
+
+	// ErrSkillBodyNotFound indicates that the skill root directory exists
+	// but does not contain a SKILL.md file at its top level.
+	ErrSkillBodyNotFound = newSkillResolutionError("source: SKILL.md not found in skill directory")
+
+	// ErrInvalidSkillAssetPath indicates that a SkillAsset constructor
+	// received a relative path that fails the value object invariants
+	// (empty, absolute, contains "..", contains "\", or equals "SKILL.md").
+	ErrInvalidSkillAssetPath = errors.New("source: invalid skill asset path")
+
+	// ErrInvalidSkillRoot indicates that a SkillMeta constructor received
+	// a root path that fails the value object invariants (empty, absolute,
+	// contains "..", contains a trailing slash, or contains a backslash).
+	ErrInvalidSkillRoot = errors.New("source: invalid skill root")
+
+	// ErrDuplicateSkillAsset indicates that a SkillMeta constructor
+	// received an assets slice with a duplicate SkillAsset.Path entry.
+	ErrDuplicateSkillAsset = errors.New("source: duplicate skill asset")
 )
+
+// skillResolutionError is a sentinel whose Is() method also matches the
+// umbrella ErrSkillResolution, so callers can detect "any skill-resolution
+// failure" with a single errors.Is check.
+type skillResolutionError struct{ msg string }
+
+func newSkillResolutionError(msg string) error { return &skillResolutionError{msg: msg} }
+
+func (e *skillResolutionError) Error() string { return e.msg }
+
+func (e *skillResolutionError) Is(target error) bool {
+	return target == ErrSkillResolution
+}
