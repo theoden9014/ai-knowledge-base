@@ -1,0 +1,11 @@
+pack: ai-knowledge-base
+version: 0.1.0
+description: |
+  Repository-local guidance for authoring and maintaining tool-neutral AI
+  knowledge packs in ai-knowledge-base.
+
+default_tools: [claude, codex, gemini]
+
+entries:
+  - id: ai-knowledge-base.skill.knowledge-authoring
+    path: skills/knowledge-authoring
