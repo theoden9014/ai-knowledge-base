@@ -9,9 +9,6 @@ description: |
   (2) asked to "write tests" or "add tests" for Go, (3) asked to implement tests
   for a Go function or method.
 tags: [go, test, testing]
-tools:
-  claude:
-    enabled: true
 ---
 
 # Go Table-Driven Test Authoring Workflow
