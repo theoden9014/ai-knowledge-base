@@ -4,7 +4,7 @@ description: |
   A knowledge pack for Go development. Provides skills that guide AI to author
   maintainable tests and keep Go code quality high.
 
-default_tools: [claude]
+default_tools: [claude, codex, gemini]
 
 entries:
   - id: go.skill.test-authoring
