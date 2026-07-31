@@ -110,9 +110,10 @@ Manual versus automatic invocation is an orthogonal property of a skill.
 
 Use the current target documentation and repository builder contract before emitting these
 fields. Keep the neutral meaning as “manual invocation” rather than introducing `command` or
-`prompt` as a semantic kind. The current neutral builder copies Skill sibling resources to every
-enabled target, so do not add `agents/openai.yaml` to a multi-target pack until target-scoped
-resources are supported.
+`prompt` as a semantic kind. The current neutral builder copies Skill siblings to every target
+enabled for that entry. Therefore, add `agents/openai.yaml` only when the Skill entry resolves as
+Codex-only and the current distribution contract supports the file; do not add it to an entry
+that is also enabled for Claude or Gemini.
 
 ## Pack boundary
 

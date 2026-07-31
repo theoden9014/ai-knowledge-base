@@ -122,9 +122,10 @@ entries that only rename another entry or repeat repository-wide guidance.
 7. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Declare
    dependencies using only fields supported by the repository.
 
-Do not add target-specific sibling resources such as `agents/openai.yaml` while the builder
-copies every Skill sibling to every enabled target. Add them only after target-scoped resource
-support exists.
+Do not add a target-specific sibling such as `agents/openai.yaml` to a Skill that is also
+enabled for other targets: the builder copies every sibling to every target enabled for that
+entry. A target-only entry may carry its target's supported siblings, but first verify that the
+current schema, builder, and distribution documentation agree.
 
 Do not add auxiliary README, changelog, installation, or quick-reference files inside a Skill.
 Do not weaken schemas or builder tests to accept malformed content.
