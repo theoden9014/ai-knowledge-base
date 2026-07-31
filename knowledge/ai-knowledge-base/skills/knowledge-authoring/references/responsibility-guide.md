@@ -1,6 +1,7 @@
 # Knowledge Pack Responsibility Guide
 
-Use this guide to decide where knowledge belongs and how to divide a pack.
+Use this guide during new pack design or substantial restructuring to decide where knowledge
+belongs and how to divide an ai-knowledge-base pack.
 
 ## Contents
 

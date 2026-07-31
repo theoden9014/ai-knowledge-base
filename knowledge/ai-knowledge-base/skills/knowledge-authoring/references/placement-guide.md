@@ -1,8 +1,9 @@
 # Knowledge Placement Guide
 
-Use this guide before creating pack entries. Its purpose is to prevent Skills and Agents from
-absorbing responsibilities that belong to persistent guidance, canonical documentation,
-runtime intent, or deterministic enforcement.
+Use this guide before designing or substantially restructuring pack entries in
+ai-knowledge-base. Its purpose is to prevent Skills and Agents from absorbing responsibilities
+that belong to persistent guidance, canonical documentation, runtime intent, or deterministic
+enforcement.
 
 ## Contents
 

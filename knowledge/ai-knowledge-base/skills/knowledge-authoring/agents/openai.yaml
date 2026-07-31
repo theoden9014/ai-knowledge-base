@@ -1,0 +1,4 @@
+interface:
+  display_name: "Author Knowledge Packs"
+  short_description: "Design and maintain portable knowledge packs"
+  default_prompt: "Use $ai-knowledge-base-knowledge-authoring to design or update and validate a knowledge pack."

@@ -1,6 +1,7 @@
 # Knowledge Pack Quality Checklist
 
-Use this checklist before editing and before declaring the pack complete.
+Use the relevant sections of this checklist while designing, implementing, maintaining, and
+reviewing an ai-knowledge-base pack.
 
 ## Contract
 
