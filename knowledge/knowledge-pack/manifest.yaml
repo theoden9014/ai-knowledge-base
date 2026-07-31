@@ -1,0 +1,11 @@
+pack: knowledge-pack
+version: 0.1.0
+description: |
+  A knowledge pack for designing, creating, and validating cohesive,
+  tool-neutral knowledge packs in this repository.
+
+default_tools: [claude, codex, gemini]
+
+entries:
+  - id: knowledge-pack.skill.creator
+    path: skills/creator

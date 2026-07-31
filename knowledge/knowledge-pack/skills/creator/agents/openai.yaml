@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Knowledge Pack"
+  short_description: "Design and validate a tool-neutral knowledge pack"
+  default_prompt: "Use $knowledge-pack-creator to design and create a validated knowledge pack for this repository."
