@@ -111,17 +111,20 @@ entries that only rename another entry or repeat repository-wide guidance.
 1. Update `knowledge/<pack>/manifest.yaml`.
 2. Add or update each source in the path required by the live schema.
 3. Keep IDs, paths, names, and manifest entries one-to-one.
-4. Keep the body tool-neutral. Add target-specific metadata only when behavior genuinely
-   differs.
+4. Keep the body tool-neutral. Add target-specific metadata only through a field or resource
+   that the current schema and builder can scope to that target.
 5. Add Skill resources only when they improve repeatability:
    - `scripts/` for deterministic repeated operations
    - `references/` for detailed knowledge loaded on demand
    - `assets/` for files copied or transformed into outputs
-   - `agents/` for product-specific Skill metadata when supported
 6. Write Skill descriptions as trigger contracts containing the action, positive triggers, and
    meaningful exclusions. Keep the main file concise and link directly to optional references.
 7. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Declare
    dependencies using only fields supported by the repository.
+
+Do not add target-specific sibling resources such as `agents/openai.yaml` while the builder
+copies every Skill sibling to every enabled target. Add them only after target-scoped resource
+support exists.
 
 Do not add auxiliary README, changelog, installation, or quick-reference files inside a Skill.
 Do not weaken schemas or builder tests to accept malformed content.
@@ -141,10 +144,11 @@ Validate in this order:
 4. Build the affected pack for every enabled target:
 
    ```bash
-   go -C knit run . build --target=<target> ../knowledge/<pack>
+   go -C knit run . build --target=<target> -o <temporary-output-dir>/<target> ../knowledge/<pack>
    ```
 
-5. Inspect generated paths and metadata, not only command success.
+5. Inspect the emitted files, paths, and metadata in each target's output directory, not only
+   command success.
 6. Test representative trigger and non-trigger requests for public Skills.
 7. Run `git diff --check` and inspect the complete diff.
 

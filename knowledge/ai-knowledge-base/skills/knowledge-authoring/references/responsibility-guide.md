@@ -106,11 +106,13 @@ Manual versus automatic invocation is an orthogonal property of a skill.
 | Intent | Claude Code | Codex |
 |---|---|---|
 | Allow implicit and explicit use | Default Skill behavior | Default Skill behavior |
-| Explicit/manual use only | `disable-model-invocation: true` in Skill frontmatter | `policy.allow_implicit_invocation: false` in `agents/openai.yaml` |
+| Explicit/manual use only | `disable-model-invocation: true` in Skill frontmatter | `policy.allow_implicit_invocation: false` in `agents/openai.yaml` when the distribution path supports target-scoped Skill resources |
 
 Use the current target documentation and repository builder contract before emitting these
 fields. Keep the neutral meaning as “manual invocation” rather than introducing `command` or
-`prompt` as a semantic kind.
+`prompt` as a semantic kind. The current neutral builder copies Skill sibling resources to every
+enabled target, so do not add `agents/openai.yaml` to a multi-target pack until target-scoped
+resources are supported.
 
 ## Pack boundary
 
