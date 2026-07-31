@@ -134,10 +134,11 @@ different responsibilities.
 
 ## Product-specific distinctions
 
-- Claude Custom Commands are a legacy authoring form merged into Skills. Existing files may
-  work, but create new reusable workflows as Skills.
-- Codex Custom Prompts have been removed from current Codex versions. Convert reusable prompts
-  to Skills.
+- Treat product-specific command and prompt files as migration inputs, not as neutral knowledge
+  kinds. Verify their current support and deprecation status in the target's official
+  documentation before changing or removing existing files.
+- Prefer Skills for new reusable workflows unless the user explicitly requires a supported
+  target-specific surface.
 - Built-in slash commands are product UI operations, not neutral pack entry kinds.
 - Skill discovery locations and product-specific metadata differ. Keep one neutral capability
   and let target builders produce the required layout.
