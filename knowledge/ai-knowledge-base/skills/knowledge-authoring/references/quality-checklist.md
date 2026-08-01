@@ -24,7 +24,8 @@ reviewing an ai-knowledge-base pack.
 - [ ] Always-on guidance and deterministic enforcement are outside the pack where appropriate.
 - [ ] Canonical project documentation is linked rather than copied into Skills or Agents.
 - [ ] Current-task objectives, scope, and completion criteria remain runtime inputs.
-- [ ] Dependencies are explicit, acyclic, and point to existing entries.
+- [ ] Every required dependency is representable by the schema and preserved by every enabled target.
+- [ ] Unsupported dependency behavior is made self-contained or disabled for that target.
 
 ## Skill quality
 
@@ -42,7 +43,7 @@ reviewing an ai-knowledge-base pack.
 - [ ] Required inputs and allowed context are explicit.
 - [ ] Tool, model, and permission restrictions are intentional.
 - [ ] The output contract is directly usable by the caller.
-- [ ] Supporting skills are declared rather than copied into the agent body.
+- [ ] `uses_skills` is used only when every enabled target preserves the dependency.
 - [ ] The agent does not duplicate the main workflow or act as an unnecessary persona.
 - [ ] The benefit of isolation or delegation justifies the Agent's coordination and context cost.
 

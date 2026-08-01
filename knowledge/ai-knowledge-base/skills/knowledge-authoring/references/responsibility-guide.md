@@ -130,22 +130,24 @@ A pack may contain:
 
 - one independently useful skill
 - several peer skills
-- a public orchestrator plus internal skills
-- skills plus specialist agents that depend on them
+- a self-contained public orchestrator alongside independently invocable skills
+- skills plus specialist agents
 
 ## Dependency direction
 
-Prefer this direction:
+The current neutral schema declares only Agent-to-Skill dependencies through `uses_skills`. It
+does not declare Skill-to-Skill, Skill-to-Agent, or Agent-to-Agent dependencies. Do not describe
+those relationships as required portable dependencies.
 
-```text
-public orchestration skill
-    -> focused skills or specialist agents
-agent
-    -> declared supporting skills
-```
+Before using `uses_skills`, verify that every enabled target preserves the relationship. If any
+target drops it, either disable that target for the Agent or make the Agent self-contained
+without relying on preloaded skills. A successful build is insufficient when required semantics
+are discarded.
 
-Keep shared knowledge in one skill and reference it. Do not duplicate the same policy across
-several agents. Avoid dependency cycles and hidden dependencies expressed only in prose.
+Keep peer Skills independently invocable. Put orchestration steps in a self-contained public
+Skill and treat optional calls to other entries as runtime choices, not schema-enforced
+dependencies. Avoid cycles, duplicated policy, and required dependencies expressed only in
+prose.
 
 ## Portability boundary
 

@@ -80,9 +80,12 @@ with `invocation: manual`. Keep durable repository guidance in the narrowest app
 persistent instruction file, canonical project information in documentation, current intent in
 the runtime prompt, and deterministic guarantees in code or policy.
 
-Prefer one public orchestration Skill plus focused supporting Skills or Agents when a workflow
-has multiple independently valuable stages. Reject cycles, duplicated responsibilities, and
-hidden dependencies.
+Keep each public Skill independently invocable and self-contained. The current neutral schema
+does not encode Skill-to-Skill or Skill-to-Agent dependencies. It encodes only Agent-to-Skill
+references through `uses_skills`, and not every target preserves them. Use a dependency only
+when the schema and every enabled target represent its required behavior; otherwise make the
+entry self-contained or disable the unsupported target. Reject cycles, duplicated
+responsibilities, and required dependencies hidden only in prose.
 
 ### 3. Name entries
 
@@ -104,8 +107,10 @@ List each proposed entry before editing:
 | ID | Kind | Path | Responsibility | Trigger or caller | Dependencies | Targets | Resources |
 |---|---|---|---|---|---|---|---|
 
-Verify that each responsibility has one owner and each dependency has a clear direction. Remove
-entries that only rename another entry or repeat repository-wide guidance.
+Verify that each responsibility has one owner. For every required dependency, identify its
+schema field and confirm that every enabled target preserves it. Redesign dependencies that
+cannot pass this check. Remove entries that only rename another entry or repeat repository-wide
+guidance.
 
 ## Author or maintain the pack
 
@@ -122,8 +127,9 @@ entries that only rename another entry or repeat repository-wide guidance.
    - `assets/` for files copied or transformed into outputs
 7. Write Skill descriptions as trigger contracts containing the action, positive triggers, and
    meaningful exclusions. Keep the main file concise and link directly to optional references.
-8. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Declare
-   dependencies using only fields supported by the repository.
+8. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Use
+   `uses_skills` only when every enabled target preserves the dependency; otherwise make the
+   Agent self-contained or disable the unsupported target.
 
 Do not add a target-specific sibling such as `agents/openai.yaml` to a Skill that is also
 enabled for other targets: the builder copies every sibling to every target enabled for that
