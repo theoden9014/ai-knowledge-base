@@ -15,7 +15,7 @@ type Entry struct {
 	// ID is the neutral identifier in the form <pack>.<kind>.<name>.
 	ID string
 
-	// Kind is the entry kind (skill / agent / rule / prompt).
+	// Kind is the entry kind (skill / agent).
 	Kind Kind
 
 	// Name is the identifier that will be passed to the target tool.
@@ -47,7 +47,7 @@ type Entry struct {
 	Skill *SkillMeta
 
 	// Path is the pack-relative location of the source for this entry.
-	// For agent / rule / prompt entries it is the entry's markdown file
+	// For agent entries it is the entry's markdown file
 	// (e.g. "agents/reviewer.md"). For skill entries it is the skill
 	// root directory (e.g. "skills/orchestrator"), carrying the same
 	// value as Skill.Root() for compatibility with callers that read
@@ -84,9 +84,7 @@ type ToolConfig struct {
 }
 
 // HasFrontmatterFor reports whether the entry declares non-empty
-// tools.<target>.frontmatter. Distribution renderers use this to decide
-// whether the per-target frontmatter conflicts with a frontmatter-less
-// output format (e.g. CLAUDE.md / AGENTS.md / GEMINI.md).
+// tools.<target>.frontmatter.
 func (e Entry) HasFrontmatterFor(target Target) bool {
 	cfg, ok := e.Tools[target]
 	return ok && len(cfg.Frontmatter) > 0

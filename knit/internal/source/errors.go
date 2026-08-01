@@ -25,6 +25,18 @@ var (
 	// match the id declared for it in manifest.entries.
 	ErrIDMismatch = errors.New("source: entry id does not match manifest")
 
+	// ErrPackMismatch indicates that the pack directory, manifest pack name,
+	// or pack segment of an entry ID do not agree.
+	ErrPackMismatch = errors.New("source: pack identity mismatch")
+
+	// ErrKindMismatch indicates that an entry's frontmatter kind differs from
+	// the kind segment in its manifest entry ID.
+	ErrKindMismatch = errors.New("source: entry kind does not match manifest id")
+
+	// ErrPathMismatch indicates that a manifest entry path does not use the
+	// entry-name segment from its ID.
+	ErrPathMismatch = errors.New("source: entry path does not match manifest id")
+
 	// ErrDuplicateEntryID indicates that two entries share the same
 	// neutral id within a single pack.
 	ErrDuplicateEntryID = errors.New("source: duplicate entry id")
@@ -69,6 +81,10 @@ var (
 	// ErrDuplicateSkillAsset indicates that a SkillMeta constructor
 	// received an assets slice with a duplicate SkillAsset.Path entry.
 	ErrDuplicateSkillAsset = errors.New("source: duplicate skill asset")
+
+	// ErrInvalidSkillInvocation indicates that a skill invocation value is
+	// neither "both" nor "manual".
+	ErrInvalidSkillInvocation = errors.New("source: invalid skill invocation")
 )
 
 // skillResolutionError is a sentinel whose Is() method also matches the

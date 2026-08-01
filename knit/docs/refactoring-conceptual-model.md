@@ -1,5 +1,9 @@
 # Refactoring Conceptual Model: 配布層共通化と値オブジェクト導入
 
+> Historical design record. It predates the two-kind model and is not
+> normative. See [`concept.md`](concept.md) and
+> [`../../docs/knowledge-format.md`](../../docs/knowledge-format.md).
+
 このドキュメントは、knit の `internal/distribution/{claude,codex,gemini}` における Builder / Installer / Uninstaller / Lister の手続き重複と、`Artifact.Path` / `InventoryRoots` / `EntryID` / `InstallationID` の primitive obsession を解消するためのリファクタリングで導入する概念を整理する。
 
 実装の手順・段階・コード詳細はこの文書には含めない。責務・関係・不変条件のみを記述する。

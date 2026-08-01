@@ -1,5 +1,9 @@
 # Skill Directory Unit - Interface Design
 
+> Historical design record for the original directory migration. The current
+> canonical model is defined by
+> [`../../docs/knowledge-format.md`](../../docs/knowledge-format.md).
+
 要件: [skill-directory-requirements.md](./skill-directory-requirements.md)
 概念モデル: [skill-directory-conceptual-model.md](./skill-directory-conceptual-model.md)
 責務割当: [skill-directory-responsibility.md](./skill-directory-responsibility.md)

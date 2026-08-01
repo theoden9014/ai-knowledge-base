@@ -74,10 +74,11 @@ Use Skills for reusable procedures, domain knowledge, checklists, or output cont
 Agents only when isolated context, a specialist role, restricted tools, delegation, or
 independent judgment is essential.
 
-Do not introduce a knowledge kind merely to encode an invocation style or scope. Model reusable
-command and prompt workflows as Skills. Keep durable repository guidance in the narrowest
-applicable persistent instruction file, canonical project information in documentation, current
-intent in the runtime prompt, and deterministic guarantees in code or policy.
+Use only the current neutral kinds: `skill` and `agent`. Do not introduce a knowledge kind merely
+to encode an invocation style or scope. Model reusable command and prompt workflows as Skills
+with `invocation: manual`. Keep durable repository guidance in the narrowest applicable
+persistent instruction file, canonical project information in documentation, current intent in
+the runtime prompt, and deterministic guarantees in code or policy.
 
 Prefer one public orchestration Skill plus focused supporting Skills or Agents when a workflow
 has multiple independently valuable stages. Reject cycles, duplicated responsibilities, and
@@ -113,13 +114,15 @@ entries that only rename another entry or repeat repository-wide guidance.
 3. Keep IDs, paths, names, and manifest entries one-to-one.
 4. Keep the body tool-neutral. Add target-specific metadata only through a field or resource
    that the current schema and builder can scope to that target.
-5. Add Skill resources only when they improve repeatability:
+5. Set `invocation: manual` for command-like Skills that must not be selected implicitly; omit
+   it when implicit and explicit invocation are both safe.
+6. Add Skill resources only when they improve repeatability:
    - `scripts/` for deterministic repeated operations
    - `references/` for detailed knowledge loaded on demand
    - `assets/` for files copied or transformed into outputs
-6. Write Skill descriptions as trigger contracts containing the action, positive triggers, and
+7. Write Skill descriptions as trigger contracts containing the action, positive triggers, and
    meaningful exclusions. Keep the main file concise and link directly to optional references.
-7. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Declare
+8. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Declare
    dependencies using only fields supported by the repository.
 
 Do not add a target-specific sibling such as `agents/openai.yaml` to a Skill that is also

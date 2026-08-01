@@ -2,7 +2,6 @@ package codex
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestBuilder_Build_KindSkill(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-orchestrator",
 				Description: "orchestrator skill",
-				Path:        "skills/orchestrator/SKILL.md",
+				Path:        "skills/orchestrator",
 				Body:        []byte("# body\n"),
 			},
 		},
@@ -83,7 +82,7 @@ func TestBuilder_Build_KindSkill_FrontmatterMerge(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-s",
 				Description: "original",
-				Path:        "skills/s/SKILL.md",
+				Path:        "skills/s",
 				Body:        []byte("body\n"),
 				Tools: map[source.Target]source.ToolConfig{
 					Target: {
@@ -203,142 +202,6 @@ func TestBuilder_Build_KindAgent_TOMLEscapesTripleQuoteCollision(t *testing.T) {
 	}
 }
 
-func TestBuilder_Build_KindPrompt(t *testing.T) {
-	pack := &source.Pack{
-		Name:         "demo",
-		Version:      "0.1.0",
-		DefaultTools: []source.Target{Target},
-		Entries: []source.Entry{
-			{
-				ID:          "demo.prompt.review",
-				Kind:        source.KindPrompt,
-				Name:        "demo-review",
-				Description: "review prompt",
-				Path:        "prompts/review.md",
-				Body:        []byte("Review the PR.\n"),
-				Tools: map[source.Target]source.ToolConfig{
-					Target: {
-						Frontmatter: map[string]any{
-							"argument-hint": "PR=<num>",
-						},
-					},
-				},
-			},
-		},
-	}
-	got, err := NewBuilder().Build(context.Background(), pack)
-	if err != nil {
-		t.Fatalf("Build() err = %v", err)
-	}
-	if len(got) != 1 {
-		t.Fatalf("Build() returned %d artifacts, want 1", len(got))
-	}
-	a := got[0]
-	if a.Path != "prompts/demo-review.md" {
-		t.Errorf("prompt Artifact.Path = %q, want prompts/demo-review.md", a.Path)
-	}
-	content := string(a.Content)
-	if !strings.HasPrefix(content, "---\n") {
-		t.Errorf("prompt should start with YAML frontmatter\n%s", content)
-	}
-	if !strings.Contains(content, "description: review prompt") {
-		t.Errorf("prompt frontmatter missing description\n%s", content)
-	}
-	if !strings.Contains(content, "argument-hint: PR=<num>") {
-		t.Errorf("prompt frontmatter missing argument-hint\n%s", content)
-	}
-	if !strings.Contains(content, "Review the PR.") {
-		t.Errorf("prompt body missing\n%s", content)
-	}
-}
-
-func TestBuilder_Build_KindRule_ConcatenatesAGENTSmd(t *testing.T) {
-	pack := &source.Pack{
-		Name:         "demo",
-		Version:      "0.1.0",
-		DefaultTools: []source.Target{Target},
-		Entries: []source.Entry{
-			{
-				ID:          "demo.rule.first",
-				Kind:        source.KindRule,
-				Name:        "first-rule",
-				Description: "",
-				Path:        "rules/first.md",
-				Body:        []byte("First rule body.\n"),
-			},
-			{
-				ID:          "demo.rule.second",
-				Kind:        source.KindRule,
-				Name:        "second-rule",
-				Description: "",
-				Path:        "rules/second.md",
-				Body:        []byte("Second rule body.\n"),
-			},
-		},
-	}
-	got, err := NewBuilder().Build(context.Background(), pack)
-	if err != nil {
-		t.Fatalf("Build() err = %v", err)
-	}
-	if len(got) != 1 {
-		t.Fatalf("Build() returned %d artifacts, want 1 AGENTS.md", len(got))
-	}
-	a := got[0]
-	if a.Path != "AGENTS.md" {
-		t.Errorf("rule Artifact.Path = %q, want AGENTS.md", a.Path)
-	}
-	if strings.HasPrefix(string(a.Content), "---\n") {
-		t.Errorf("AGENTS.md must not have YAML frontmatter, got:\n%s", string(a.Content))
-	}
-	content := string(a.Content)
-	if !strings.Contains(content, "# demo") {
-		t.Errorf("AGENTS.md missing H1 pack name\n%s", content)
-	}
-	if !strings.Contains(content, "## first-rule") {
-		t.Errorf("AGENTS.md missing H2 for first rule\n%s", content)
-	}
-	if !strings.Contains(content, "## second-rule") {
-		t.Errorf("AGENTS.md missing H2 for second rule\n%s", content)
-	}
-	if !strings.Contains(content, "First rule body.") || !strings.Contains(content, "Second rule body.") {
-		t.Errorf("AGENTS.md missing rule body\n%s", content)
-	}
-	// Order: first appears before second.
-	if strings.Index(content, "## first-rule") > strings.Index(content, "## second-rule") {
-		t.Errorf("AGENTS.md rules should be in manifest order (first before second)\n%s", content)
-	}
-	wantIDs := []string{"demo.rule.first", "demo.rule.second"}
-	if diff := cmp.Diff(wantIDs, a.SourceEntryIDs); diff != "" {
-		t.Errorf("AGENTS.md SourceEntryIDs mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestBuilder_Build_KindRule_FrontmatterConflict(t *testing.T) {
-	pack := &source.Pack{
-		Name:         "demo",
-		Version:      "0.1.0",
-		DefaultTools: []source.Target{Target},
-		Entries: []source.Entry{
-			{
-				ID:   "demo.rule.x",
-				Kind: source.KindRule,
-				Name: "x",
-				Path: "rules/x.md",
-				Body: []byte("body\n"),
-				Tools: map[source.Target]source.ToolConfig{
-					Target: {
-						Frontmatter: map[string]any{"k": "v"},
-					},
-				},
-			},
-		},
-	}
-	_, err := NewBuilder().Build(context.Background(), pack)
-	if !errors.Is(err, ErrFrontmatterMergeConflict) {
-		t.Errorf("Build() err = %v, want errors.Is(err, ErrFrontmatterMergeConflict)", err)
-	}
-}
-
 func TestBuilder_Build_RespectsToolsEnabled(t *testing.T) {
 	pack := &source.Pack{
 		Name:         "demo",
@@ -350,7 +213,7 @@ func TestBuilder_Build_RespectsToolsEnabled(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-included",
 				Description: "yes",
-				Path:        "skills/included/SKILL.md",
+				Path:        "skills/included",
 				Body:        []byte("body\n"),
 			},
 			{
@@ -358,7 +221,7 @@ func TestBuilder_Build_RespectsToolsEnabled(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-excluded",
 				Description: "no",
-				Path:        "skills/excluded/SKILL.md",
+				Path:        "skills/excluded",
 				Body:        []byte("body\n"),
 				Tools: map[source.Target]source.ToolConfig{
 					Target: {Enabled: boolPtr(false)},
@@ -398,7 +261,7 @@ func TestBuilder_Build_DefaultToolsExclusion(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "demo-a",
 				Description: "x",
-				Path:        "skills/a/SKILL.md",
+				Path:        "skills/a",
 				Body:        []byte("body\n"),
 			},
 		},
@@ -422,7 +285,7 @@ func TestBuilder_Build_EmitsCodexTargetForAllArtifacts(t *testing.T) {
 				ID:   "demo.skill.a",
 				Kind: source.KindSkill,
 				Name: "demo-a",
-				Path: "skills/a/SKILL.md",
+				Path: "skills/a",
 				Body: []byte("body\n"),
 			},
 			{
@@ -432,28 +295,14 @@ func TestBuilder_Build_EmitsCodexTargetForAllArtifacts(t *testing.T) {
 				Path: "agents/b.md",
 				Body: []byte("body\n"),
 			},
-			{
-				ID:   "demo.prompt.c",
-				Kind: source.KindPrompt,
-				Name: "demo-c",
-				Path: "prompts/c.md",
-				Body: []byte("body\n"),
-			},
-			{
-				ID:   "demo.rule.d",
-				Kind: source.KindRule,
-				Name: "demo-d",
-				Path: "rules/d.md",
-				Body: []byte("body\n"),
-			},
 		},
 	}
 	got, err := NewBuilder().Build(context.Background(), pack)
 	if err != nil {
 		t.Fatalf("Build() err = %v", err)
 	}
-	if len(got) != 4 {
-		t.Fatalf("Build() returned %d artifacts, want 4", len(got))
+	if len(got) != 2 {
+		t.Fatalf("Build() returned %d artifacts, want 2", len(got))
 	}
 	for i, a := range got {
 		if a.Target != Target {

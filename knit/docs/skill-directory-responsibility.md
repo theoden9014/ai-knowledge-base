@@ -1,5 +1,9 @@
 # Skill Directory Unit - Responsibility Assignment
 
+> Historical design record for the original directory migration. Current
+> responsibility boundaries are documented in
+> [`../../docs/authoring-guidelines.md`](../../docs/authoring-guidelines.md).
+
 要件: [skill-directory-requirements.md](./skill-directory-requirements.md)
 概念モデル: [skill-directory-conceptual-model.md](./skill-directory-conceptual-model.md)
 既存責務分担: [refactoring-conceptual-model.md](./refactoring-conceptual-model.md), [concept.md](./concept.md), [modules.md](./modules.md)

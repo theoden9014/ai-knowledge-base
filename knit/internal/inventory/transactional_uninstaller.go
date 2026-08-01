@@ -15,12 +15,12 @@ import (
 type TransactionalUninstaller struct {
 	store    ArtifactStore
 	labels   LabelStore
-	resolver *PathResolver
+	resolver ArtifactResolver
 }
 
 // NewTransactionalUninstaller validates dependencies and returns an
 // Uninstaller.
-func NewTransactionalUninstaller(store ArtifactStore, labels LabelStore, resolver *PathResolver) (*TransactionalUninstaller, error) {
+func NewTransactionalUninstaller(store ArtifactStore, labels LabelStore, resolver ArtifactResolver) (*TransactionalUninstaller, error) {
 	if store == nil {
 		return nil, errors.New("inventory: transactional uninstaller requires artifact store")
 	}
@@ -43,6 +43,10 @@ func (u *TransactionalUninstaller) Target() source.Target { return u.resolver.Ta
 //  4. Installation not found (ErrInstallationNotFound)
 //  5. File delete -> Label delete -> PruneAncestorsWithin
 //
+// Installation.ID selects the persisted LabelData, whose ArtifactPath is the
+// authoritative deletion path. The caller-provided Artifact.Path is never
+// trusted when an ID is present.
+//
 // Orphan-label case (Label present, file absent) is handled by skipping the
 // file delete and proceeding with label deletion only.
 func (u *TransactionalUninstaller) Uninstall(ctx context.Context, installation Installation) error {
@@ -53,37 +57,37 @@ func (u *TransactionalUninstaller) Uninstall(ctx context.Context, installation I
 		return ErrTargetMismatch
 	}
 	scope := installation.Label.Scope
-	if _, err := u.resolver.ResolveRoot(scope); err != nil {
+	if err := u.resolver.ValidateScope(scope); err != nil {
 		return err
 	}
-	// Prefer Installation.Artifact.Path, but fall back to ID when callers
-	// (notably contract-test fabricators) construct an Installation from
-	// the ID alone. ID is the ArtifactPath of the installation in opaque
-	// form, so the string form round-trips through NewArtifactPath.
-	relStr := installation.Artifact.Path
-	if relStr == "" {
-		relStr = string(installation.ID)
+	id := installation.ID
+	if id == "" {
+		return ErrInvalidInstallationID
 	}
-	rel, err := source.NewArtifactPath(relStr)
+
+	// The persisted label is authoritative for placement. Never derive the
+	// deletion target from the caller's mutable Artifact.Path when an ID is
+	// available.
+	data, err := u.labels.Get(ctx, scope, id)
 	if err != nil {
 		return err
+	}
+	rel, err := source.NewArtifactPath(data.ArtifactPath)
+	if err != nil {
+		return err
+	}
+	persistedID, err := NewInstallationIDFromArtifactPath(rel)
+	if err != nil {
+		return err
+	}
+	if persistedID != id {
+		return fmt.Errorf(
+			"%w: requested=%s persisted=%s",
+			ErrInstallationIdentityMismatch, id, persistedID,
+		)
 	}
 	abs, err := u.resolver.Resolve(scope, rel)
 	if err != nil {
-		return err
-	}
-	id, err := NewInstallationIDFromArtifactPath(rel)
-	if err != nil {
-		return err
-	}
-	root, err := u.resolver.ResolveRoot(scope)
-	if err != nil {
-		return err
-	}
-
-	// Confirm the label exists; that is the canonical "is the entity in
-	// this Inventory" signal per refactoring-conceptual-model.md.
-	if _, err := u.labels.Get(ctx, scope, id); err != nil {
 		return err
 	}
 
@@ -100,7 +104,7 @@ func (u *TransactionalUninstaller) Uninstall(ctx context.Context, installation I
 		return fmt.Errorf("inventory: delete label: %w", err)
 	}
 	if filePresent {
-		if err := u.store.PruneAncestorsWithin(ctx, abs, root); err != nil && !errors.Is(err, ErrPruneBoundaryViolation) {
+		if err := u.store.PruneAncestorsWithin(ctx, abs, abs.Root()); err != nil && !errors.Is(err, ErrPruneBoundaryViolation) {
 			// Boundary violation must never occur here because Resolve
 			// already produced a path within root. Other prune errors are
 			// best-effort cleanup; do not fail the uninstall over them.

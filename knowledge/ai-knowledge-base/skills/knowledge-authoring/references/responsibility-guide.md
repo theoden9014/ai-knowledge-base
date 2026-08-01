@@ -103,17 +103,15 @@ Use a skill unless context isolation, specialist judgment, or delegation changes
 
 Manual versus automatic invocation is an orthogonal property of a skill.
 
-| Intent | Claude Code | Codex |
+| Intent | Neutral source | Target result |
 |---|---|---|
-| Allow implicit and explicit use | Default Skill behavior | Default Skill behavior |
-| Explicit/manual use only | `disable-model-invocation: true` in Skill frontmatter | `policy.allow_implicit_invocation: false` in `agents/openai.yaml` when the distribution path supports target-scoped Skill resources |
+| Allow implicit and explicit use | Omit `invocation` or use `invocation: both` | Default Skill behavior |
+| Explicit/manual use only | `invocation: manual` | Builder emits the target's explicit-only control |
 
-Use the current target documentation and repository builder contract before emitting these
-fields. Keep the neutral meaning as “manual invocation” rather than introducing `command` or
-`prompt` as a semantic kind. The current neutral builder copies Skill siblings to every target
-enabled for that entry. Therefore, add `agents/openai.yaml` only when the Skill entry resolves as
-Codex-only and the current distribution contract supports the file; do not add it to an entry
-that is also enabled for Claude or Gemini.
+Keep the neutral meaning as “manual invocation” rather than introducing `command` or `prompt`
+as a semantic kind or hand-authoring generated target metadata. Check every enabled target
+before choosing `manual`: Claude and Codex can represent it, while the current Gemini builder
+rejects it rather than silently weakening the policy.
 
 ## Pack boundary
 

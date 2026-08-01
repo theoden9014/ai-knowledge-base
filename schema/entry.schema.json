@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ai-knowledge-base/schema/entry.schema.json",
   "title": "Knowledge Entry Frontmatter",
-  "description": "Schema for the YAML frontmatter of each knowledge entry markdown file under knowledge/<pack>/{skills,agents,rules,prompts}/<name>.md.",
+  "description": "Schema for the YAML frontmatter of each knowledge entry under knowledge/<pack>/{skills,agents}.",
   "type": "object",
   "required": ["id", "kind", "name", "description"],
   "additionalProperties": false,
@@ -10,11 +10,11 @@
     "id": {
       "type": "string",
       "description": "Neutral entry id in the form <pack>.<kind>.<name>.",
-      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent|rule|prompt)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent)\\.[a-z0-9]+(-[a-z0-9]+)*$"
     },
     "kind": {
       "type": "string",
-      "enum": ["skill", "agent", "rule", "prompt"]
+      "enum": ["skill", "agent"]
     },
     "name": {
       "type": "string",
@@ -44,6 +44,11 @@
       },
       "uniqueItems": true,
       "minItems": 1
+    },
+    "invocation": {
+      "type": "string",
+      "description": "Skill invocation policy. Omitted defaults to both.",
+      "enum": ["both", "manual"]
     }
   },
   "allOf": [
@@ -55,6 +60,16 @@
       "then": {},
       "else": {
         "not": { "required": ["uses_skills"] }
+      }
+    },
+    {
+      "if": {
+        "properties": { "kind": { "const": "skill" } },
+        "required": ["kind"]
+      },
+      "then": {},
+      "else": {
+        "not": { "required": ["invocation"] }
       }
     }
   ],

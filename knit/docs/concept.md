@@ -7,7 +7,7 @@ This document summarizes the main concepts of `knit` and their relationships. Im
 | Concept | Meaning |
 |---|---|
 | **Pack** | A unit under `knowledge/<pack-name>/` that groups multiple Entries |
-| **Entry** | An individual piece of knowledge inside a pack. It has one of `kind: skill / agent / rule / prompt` |
+| **Entry** | An individual piece of knowledge inside a pack. It has one of `kind: skill / agent` |
 | **Target** | A destination AI tool for distribution (`claude` / `codex` / `gemini` ...) |
 | **Scope** | Distribution scope (`user` / `project`) |
 | **Artifact** | An intermediate representation converted into a Target-specific format |
@@ -52,5 +52,5 @@ Entry ──> Builder ──> Artifact      Installation = Artifact + Label
 
 - **Builders are replaceable per Target** and should align on a common interface
 - **Loader / Validator are Target-independent**, since they belong to the neutral-format concerns
-- **Installer / Uninstaller / Lister resolve paths according to Target and Scope**, but their file operations and Label logic can be shared
+- **Installer / Uninstaller / Lister resolve paths according to Target, Scope, and artifact family**, but their file operations and Label logic can be shared
 - `knit` does not maintain its own state file or DB; **the filesystem representation of Inventory is the source of truth**

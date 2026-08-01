@@ -1,5 +1,9 @@
 # Skill Directory Unit - Conceptual Model
 
+> Historical design record for the original directory migration. The current
+> canonical model is defined by
+> [`../../docs/knowledge-format.md`](../../docs/knowledge-format.md).
+
 要件仕様: [skill-directory-requirements.md](./skill-directory-requirements.md)
 
 本文書は既存の概念モデル（[refactoring-conceptual-model.md](./refactoring-conceptual-model.md)）への追補。差分のみを扱う。

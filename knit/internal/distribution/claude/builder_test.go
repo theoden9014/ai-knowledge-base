@@ -89,7 +89,7 @@ func TestBuilder_Build(t *testing.T) {
 							Kind:        source.KindSkill,
 							Name:        "p-orchestrator",
 							Description: "desc",
-							Path:        "skills/orchestrator.md",
+							Path:        "skills/orchestrator",
 							Body:        []byte("# Orchestrator\nbody\n"),
 						},
 					},
@@ -126,7 +126,7 @@ func TestBuilder_Build(t *testing.T) {
 							Kind:        source.KindSkill,
 							Name:        "p-s",
 							Description: "neutral-desc",
-							Path:        "skills/s.md",
+							Path:        "skills/s",
 							Body:        []byte("body\n"),
 							Tools: map[source.Target]source.ToolConfig{
 								Target: {
@@ -199,143 +199,6 @@ func TestBuilder_Build(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "prompt entry produces commands file without frontmatter",
-			b:    NewBuilder(),
-			args: args{
-				ctx: context.Background(),
-				pack: &source.Pack{
-					Name:         "p",
-					Version:      "0.1.0",
-					Description:  "x",
-					DefaultTools: []source.Target{Target},
-					Entries: []source.Entry{
-						{
-							ID:          "p.prompt.r",
-							Kind:        source.KindPrompt,
-							Name:        "p-review",
-							Description: "review prompt",
-							Path:        "prompts/review.md",
-							Body:        []byte("Please review.\n"),
-						},
-					},
-				},
-			},
-			want: []source.Artifact{
-				{
-					Target:         Target,
-					Path:           "commands/p-review.md",
-					Content:        []byte("Please review.\n"),
-					SourceEntryIDs: []string{"p.prompt.r"},
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "rule entries are concatenated in manifest order with H1/H2 headings, body newline padding and one blank line between entries",
-			b:    NewBuilder(),
-			args: args{
-				ctx: context.Background(),
-				pack: &source.Pack{
-					Name:         "p",
-					Version:      "0.1.0",
-					Description:  "x",
-					DefaultTools: []source.Target{Target},
-					Entries: []source.Entry{
-						{
-							ID:          "p.rule.r1",
-							Kind:        source.KindRule,
-							Name:        "p-r1",
-							Description: "rule1",
-							Path:        "rules/r1.md",
-							// No trailing newline; Builder should append it.
-							Body: []byte("rule1 body"),
-						},
-						{
-							ID:          "p.rule.r2",
-							Kind:        source.KindRule,
-							Name:        "p-r2",
-							Description: "rule2",
-							Path:        "rules/r2.md",
-							// Already has a trailing newline.
-							Body: []byte("rule2 body\n"),
-						},
-					},
-				},
-			},
-			want: []source.Artifact{
-				{
-					Target: Target,
-					Path:   "CLAUDE.md",
-					Content: []byte(
-						"# p\n" +
-							"\n" +
-							"## p-r1\n" +
-							"\n" +
-							"rule1 body\n" +
-							"\n" +
-							"## p-r2\n" +
-							"\n" +
-							"rule2 body\n"),
-					SourceEntryIDs: []string{"p.rule.r1", "p.rule.r2"},
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "rule entry with tools.claude.frontmatter returns ErrFrontmatterMergeConflict",
-			b:    NewBuilder(),
-			args: args{
-				ctx: context.Background(),
-				pack: &source.Pack{
-					Name:         "p",
-					Version:      "0.1.0",
-					Description:  "x",
-					DefaultTools: []source.Target{Target},
-					Entries: []source.Entry{
-						{
-							ID:   "p.rule.r1",
-							Kind: source.KindRule,
-							Name: "p-r1",
-							Path: "rules/r1.md",
-							Body: []byte("body\n"),
-							Tools: map[source.Target]source.ToolConfig{
-								Target: {Frontmatter: map[string]any{"k": "v"}},
-							},
-						},
-					},
-				},
-			},
-			want:    nil,
-			wantErr: ErrFrontmatterMergeConflict,
-		},
-		{
-			name: "prompt entry with tools.claude.frontmatter returns ErrFrontmatterMergeConflict",
-			b:    NewBuilder(),
-			args: args{
-				ctx: context.Background(),
-				pack: &source.Pack{
-					Name:         "p",
-					Version:      "0.1.0",
-					Description:  "x",
-					DefaultTools: []source.Target{Target},
-					Entries: []source.Entry{
-						{
-							ID:   "p.prompt.p1",
-							Kind: source.KindPrompt,
-							Name: "p-p1",
-							Path: "prompts/p1.md",
-							Body: []byte("body\n"),
-							Tools: map[source.Target]source.ToolConfig{
-								Target: {Frontmatter: map[string]any{"k": "v"}},
-							},
-						},
-					},
-				},
-			},
-			want:    nil,
-			wantErr: ErrFrontmatterMergeConflict,
-		},
-		{
 			name: "entry disabled for claude is skipped",
 			b:    NewBuilder(),
 			args: args{
@@ -350,14 +213,14 @@ func TestBuilder_Build(t *testing.T) {
 							ID:   "p.skill.kept",
 							Kind: source.KindSkill,
 							Name: "p-kept",
-							Path: "skills/kept.md",
+							Path: "skills/kept",
 							Body: []byte("kept\n"),
 						},
 						{
 							ID:   "p.skill.dropped",
 							Kind: source.KindSkill,
 							Name: "p-dropped",
-							Path: "skills/dropped.md",
+							Path: "skills/dropped",
 							Body: []byte("dropped\n"),
 							Tools: map[source.Target]source.ToolConfig{
 								Target: {Enabled: boolPtr(false)},
@@ -424,7 +287,7 @@ func TestBuilder_Build_isIdempotent(t *testing.T) {
 				Kind:        source.KindSkill,
 				Name:        "p-s",
 				Description: "d",
-				Path:        "skills/s.md",
+				Path:        "skills/s",
 				Body:        []byte("body\n"),
 				Tools: map[source.Target]source.ToolConfig{
 					Target: {Frontmatter: map[string]any{"zeta": 1, "alpha": "a"}},

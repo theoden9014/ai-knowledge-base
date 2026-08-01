@@ -1,5 +1,8 @@
 # Refactoring Interface Design: 配布層共通化と値オブジェクト
 
+> Historical design record. It predates the two-kind model and is not
+> normative. See [`concept.md`](concept.md) and the current code interfaces.
+
 このドキュメントは概念モデル ([refactoring-conceptual-model.md](./refactoring-conceptual-model.md)) で定義した新概念のインタフェース設計を、責務と契約レベルで記述する。具体的なシグネチャや実装コードは含めない (TDD ステージで決定する)。
 
 ## Proposed Interfaces / Responsibilities

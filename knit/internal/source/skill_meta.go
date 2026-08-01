@@ -15,8 +15,9 @@ import (
 // legacy Entry.Path field, which carries the same root value only as a
 // compatibility copy.
 type SkillMeta struct {
-	root   string
-	assets []SkillAsset
+	root       string
+	assets     []SkillAsset
+	invocation SkillInvocation
 }
 
 // NewSkillMeta validates root and assets and returns a SkillMeta that owns
@@ -25,7 +26,17 @@ type SkillMeta struct {
 // trailing slash, backslash, or ".." segment. assets must not contain two
 // elements with the same Path.
 func NewSkillMeta(root string, assets []SkillAsset) (*SkillMeta, error) {
+	return NewSkillMetaWithInvocation(root, assets, SkillInvocationBoth)
+}
+
+// NewSkillMetaWithInvocation validates root, assets, and invocation and
+// returns a SkillMeta that owns a defensive copy of the assets slice.
+func NewSkillMetaWithInvocation(root string, assets []SkillAsset, invocation SkillInvocation) (*SkillMeta, error) {
 	if err := validateSkillRoot(root); err != nil {
+		return nil, err
+	}
+	normalized, err := NormalizeSkillInvocation(invocation)
+	if err != nil {
 		return nil, err
 	}
 	seen := make(map[string]struct{}, len(assets))
@@ -37,12 +48,15 @@ func NewSkillMeta(root string, assets []SkillAsset) (*SkillMeta, error) {
 	}
 	copied := make([]SkillAsset, len(assets))
 	copy(copied, assets)
-	return &SkillMeta{root: root, assets: copied}, nil
+	return &SkillMeta{root: root, assets: copied, invocation: normalized}, nil
 }
 
 // Root returns the pack-relative skill root directory path (no trailing
 // slash, forward-slash separated).
 func (m *SkillMeta) Root() string { return m.root }
+
+// Invocation returns the normalized invocation policy.
+func (m *SkillMeta) Invocation() SkillInvocation { return m.invocation }
 
 // Assets returns a defensive copy of the skill's sibling assets.
 func (m *SkillMeta) Assets() []SkillAsset {

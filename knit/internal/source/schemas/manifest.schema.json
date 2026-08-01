@@ -45,11 +45,11 @@
         "id": {
           "type": "string",
           "description": "Neutral entry id in the form <pack>.<kind>.<name>.",
-          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent|rule|prompt)\\.[a-z0-9]+(-[a-z0-9]+)*$"
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.(skill|agent)\\.[a-z0-9]+(-[a-z0-9]+)*$"
         },
         "path": {
           "type": "string",
-          "description": "Path of the entry source relative to the pack root. Skill entries point at a per-skill directory (e.g. skills/orchestrator) so the directory can carry the SKILL.md body together with sibling assets (scripts/, references/, ...). agent/rule/prompt entries point at a single markdown file."
+          "description": "Path of the entry source relative to the pack root. Skill entries point at a per-skill directory (e.g. skills/orchestrator) so the directory can carry the SKILL.md body together with sibling assets (scripts/, references/, ...). Agent entries point at a single markdown file."
         }
       },
       "allOf": [
@@ -73,30 +73,6 @@
             "properties": {
               "path": {
                 "pattern": "^agents/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.rule\\." } }
-          },
-          "then": {
-            "properties": {
-              "path": {
-                "pattern": "^rules/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": { "id": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*\\.prompt\\." } }
-          },
-          "then": {
-            "properties": {
-              "path": {
-                "pattern": "^prompts/[a-z0-9]+(-[a-z0-9]+)*\\.md$"
               }
             }
           }

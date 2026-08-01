@@ -20,6 +20,9 @@ func (skillRenderer) Render(e *source.Entry, _ *source.Pack) ([]source.Artifact,
 	for k, v := range e.FrontmatterFor(Target) {
 		fm[k] = v
 	}
+	if e.Skill != nil && e.Skill.Invocation() == source.SkillInvocationManual {
+		fm["disable-model-invocation"] = true
+	}
 	content, err := frontmatterRenderer.Render(fm, e.Body)
 	if err != nil {
 		return nil, err
