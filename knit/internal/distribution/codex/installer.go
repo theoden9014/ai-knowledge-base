@@ -17,7 +17,18 @@ type Installer struct {
 // absolute; empty projectRoot keeps ScopeProject operations returning
 // ErrProjectRootNotConfigured at call time.
 func NewInstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Installer, error) {
-	resolver, err := buildResolver(userRoot, projectRoot)
+	return NewInstallerWithRoots(Roots{
+		UserSkills:    userRoot,
+		ProjectSkills: projectRoot,
+		UserAgents:    userRoot,
+		ProjectAgents: projectRoot,
+	}, labels)
+}
+
+// NewInstallerWithRoots constructs an Installer with independent roots for
+// skills and agents.
+func NewInstallerWithRoots(roots Roots, labels inventory.LabelStore) (*Installer, error) {
+	resolver, err := buildResolver(roots)
 	if err != nil {
 		return nil, err
 	}

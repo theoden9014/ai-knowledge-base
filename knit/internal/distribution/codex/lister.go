@@ -13,7 +13,18 @@ type Lister struct {
 }
 
 func NewLister(userRoot, projectRoot string, labels inventory.LabelStore) (*Lister, error) {
-	resolver, err := buildResolver(userRoot, projectRoot)
+	return NewListerWithRoots(Roots{
+		UserSkills:    userRoot,
+		ProjectSkills: projectRoot,
+		UserAgents:    userRoot,
+		ProjectAgents: projectRoot,
+	}, labels)
+}
+
+// NewListerWithRoots constructs a Lister with independent roots for skills
+// and agents.
+func NewListerWithRoots(roots Roots, labels inventory.LabelStore) (*Lister, error) {
+	resolver, err := buildResolver(roots)
 	if err != nil {
 		return nil, err
 	}

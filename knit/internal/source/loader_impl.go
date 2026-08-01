@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 )
@@ -52,6 +53,7 @@ type entryRaw struct {
 	Tags        []string                 `json:"tags,omitempty"`
 	Tools       map[string]toolConfigRaw `json:"tools,omitempty"`
 	UsesSkills  []string                 `json:"uses_skills,omitempty"`
+	Invocation  string                   `json:"invocation,omitempty"`
 }
 
 type toolConfigRaw struct {
@@ -83,6 +85,15 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 	if err := yaml.Unmarshal(manifestBytes, &mr); err != nil {
 		return nil, info, fmt.Errorf("source: parse %s: %w", manifestPath, err)
 	}
+	packDirName := path.Base(path.Clean(packDir))
+	// Remote fetchers may root fsys at the pack itself and pass "."; there
+	// is no directory-name identity to compare in that representation.
+	if packDirName != "." && packDirName != mr.Pack {
+		return nil, info, fmt.Errorf(
+			"%w: directory=%s manifest=%s",
+			ErrPackMismatch, packDirName, mr.Pack,
+		)
+	}
 
 	seen := make(map[string]struct{}, len(mr.Entries))
 	entries := make([]Entry, 0, len(mr.Entries))
@@ -94,24 +105,37 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 			return nil, info, fmt.Errorf("%w: %s", ErrDuplicateEntryID, me.ID)
 		}
 		seen[me.ID] = struct{}{}
+		entryID, err := NewEntryID(me.ID)
+		if err != nil {
+			return nil, info, fmt.Errorf("source: parse manifest entry id %q: %w", me.ID, err)
+		}
+		if entryID.Pack() != mr.Pack {
+			return nil, info, fmt.Errorf(
+				"%w: manifest=%s entry=%s",
+				ErrPackMismatch, mr.Pack, entryID.Pack(),
+			)
+		}
+		if err := validateManifestEntryPathIdentity(entryID, me.Path); err != nil {
+			return nil, info, err
+		}
 
 		// skill entries point at a directory whose body is the fixed
-		// SKILL.md file; every other kind points at a single markdown
+		// SKILL.md file; agent entries point at a single markdown
 		// file. We pick the resolver accordingly and, for skills, also
 		// collect sibling assets that live alongside SKILL.md.
 		isSkill := kindFromManifestEntryID(me.ID) == KindSkill
 		var (
-			bodyPath string
-			assets   []SkillAsset
-			err      error
+			bodyPath   string
+			assets     []SkillAsset
+			resolveErr error
 		)
 		if isSkill {
-			bodyPath, assets, err = resolveSkillEntrySource(fsys, packDir, me)
+			bodyPath, assets, resolveErr = resolveSkillEntrySource(fsys, packDir, me)
 		} else {
-			bodyPath, err = resolveFileEntrySource(fsys, packDir, me)
+			bodyPath, resolveErr = resolveFileEntrySource(fsys, packDir, me)
 		}
-		if err != nil {
-			return nil, info, err
+		if resolveErr != nil {
+			return nil, info, resolveErr
 		}
 		raw, err := fs.ReadFile(fsys, bodyPath)
 		if err != nil {
@@ -138,6 +162,12 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 				ErrIDMismatch, me.ID, er.ID, bodyPath,
 			)
 		}
+		if Kind(er.Kind) != entryID.Kind() {
+			return nil, info, fmt.Errorf(
+				"%w: id=%s frontmatter=%s (at %s)",
+				ErrKindMismatch, entryID.Kind(), er.Kind, bodyPath,
+			)
+		}
 
 		entry := Entry{
 			ID:          er.ID,
@@ -158,7 +188,7 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 			entry.Agent = &AgentMeta{UsesSkills: er.UsesSkills}
 		}
 		if Kind(er.Kind) == KindSkill {
-			meta, mErr := NewSkillMeta(me.Path, assets)
+			meta, mErr := NewSkillMetaWithInvocation(me.Path, assets, SkillInvocation(er.Invocation))
 			if mErr != nil {
 				return nil, info, fmt.Errorf("source: build skill meta %q: %w", me.Path, mErr)
 			}
@@ -180,6 +210,32 @@ func (l *loader) LoadPack(ctx context.Context, fsys fs.FS, packDir string) (*Pac
 		Entries:      entries,
 	}
 	return pack, info, nil
+}
+
+func validateManifestEntryPathIdentity(id EntryID, entryPath string) error {
+	var pathName string
+	switch id.Kind() {
+	case KindSkill:
+		pathName = path.Base(entryPath)
+	case KindAgent:
+		pathName = path.Base(entryPath)
+		if !strings.HasSuffix(pathName, ".md") {
+			return fmt.Errorf(
+				"%w: id=%s path=%s",
+				ErrPathMismatch, id.String(), entryPath,
+			)
+		}
+		pathName = strings.TrimSuffix(pathName, ".md")
+	default:
+		return fmt.Errorf("%w: %s", ErrInvalidKind, id.Kind())
+	}
+	if pathName != id.Name() {
+		return fmt.Errorf(
+			"%w: id=%s path=%s",
+			ErrPathMismatch, id.String(), entryPath,
+		)
+	}
+	return nil
 }
 
 // splitFrontmatter separates the leading YAML frontmatter block (delimited

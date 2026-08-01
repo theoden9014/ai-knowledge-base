@@ -25,13 +25,14 @@ ai-knowledge-base repository.
    - Use `skill` for reusable procedures, workflows, checklists, viewpoints, or
      output formats.
    - Use `agent` for a specialist role that can operate in an isolated context.
-   - Use `rule` for always-on instructions.
-   - Use `prompt` for reusable prompt or command-style entry points.
+   - Put always-on instructions in the narrowest applicable repository-native
+     instruction file, not in a pack entry.
+   - Represent reusable prompt or command-style entry points as skills with
+     `invocation: manual`.
 3. Add or update the manifest entry.
    - Entry id format is `<pack>.<kind>.<name>`.
    - Skill paths are directories: `skills/<name>`.
-   - Agent, rule, and prompt paths are files:
-     `agents/<name>.md`, `rules/<name>.md`, or `prompts/<name>.md`.
+   - Agent paths are files: `agents/<name>.md`.
 4. Add or update the entry source.
    - Skills place their body in `skills/<name>/SKILL.md`.
    - Other entry kinds are single markdown files.
@@ -53,10 +54,9 @@ ai-knowledge-base repository.
   follow, and what output or verification is expected.
 - An agent should define its role, scope, inputs, review criteria, and output
   format.
-- A rule should be short enough to stay always-on without distracting from the
-  active task.
-- A prompt should be directly executable by a user or assistant and should make
-  required inputs clear.
+- A manual skill should be directly executable and make required inputs clear.
+- Repository-native instructions should contain only broadly applicable
+  invariants and routing to narrower guidance.
 - Prefer concrete repository paths and id examples over generic prose.
 - Avoid duplicating large sections from another entry. Extract shared guidance
   into a separate skill only when it will be reused.

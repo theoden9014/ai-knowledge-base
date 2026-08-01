@@ -1,5 +1,9 @@
 # Skill Directory Unit - Requirements Specification
 
+> Historical design record for the original directory migration. The current
+> canonical requirements are defined by
+> [`../../docs/knowledge-format.md`](../../docs/knowledge-format.md).
+
 ## 1. Requirement Summary
 
 `knit` の skill エントリを「ディレクトリ単位」として扱えるよう拡張する。manifest スキーマの説明は既に「skill は per-skill ディレクトリで sibling assets (scripts/, references/, ...) を伴える」と宣言しているが、実装は manifest path・loader・renderer すべてが SKILL.md という単一ファイルしか扱えない。設計上の意図と実装を一致させ、skill ディレクトリ配下の任意の補助ファイルを skill とともに配置・列挙・削除できるようにする。

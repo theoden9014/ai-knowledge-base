@@ -145,6 +145,32 @@ entries:
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
 		},
+		{
+			name: "legacy rule entry is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.rule.x
+    path: rules/x.md
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "legacy prompt entry is rejected",
+			args: args{raw: []byte(`
+pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.prompt.x
+    path: prompts/x.md
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -177,6 +203,28 @@ id: structure-behavior-design.skill.orchestrator
 kind: skill
 name: structure-behavior-design-orchestrator
 description: orchestrator skill
+`)},
+			wantErr: false,
+		},
+		{
+			name: "valid manual skill entry",
+			args: args{raw: []byte(`
+id: p.skill.cleanup
+kind: skill
+name: cleanup
+description: cleanup development environment
+invocation: manual
+`)},
+			wantErr: false,
+		},
+		{
+			name: "valid both skill entry",
+			args: args{raw: []byte(`
+id: p.skill.cleanup
+kind: skill
+name: cleanup
+description: cleanup development environment
+invocation: both
 `)},
 			wantErr: false,
 		},
@@ -215,6 +263,52 @@ uses_skills:
 `)},
 			wantErr:  true,
 			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "invocation on agent is rejected",
+			args: args{raw: []byte(`
+id: p.agent.a
+kind: agent
+name: p-a
+description: misuse
+invocation: manual
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "unknown invocation is rejected",
+			args: args{raw: []byte(`
+id: p.skill.a
+kind: skill
+name: p-a
+description: misuse
+invocation: automatic
+`)},
+			wantErr:  true,
+			wantKind: ErrSchemaViolation,
+		},
+		{
+			name: "legacy rule kind reports ErrInvalidKind",
+			args: args{raw: []byte(`
+id: p.rule.a
+kind: rule
+name: p-a
+description: legacy
+`)},
+			wantErr:  true,
+			wantKind: ErrInvalidKind,
+		},
+		{
+			name: "legacy prompt kind reports ErrInvalidKind",
+			args: args{raw: []byte(`
+id: p.prompt.a
+kind: prompt
+name: p-a
+description: legacy
+`)},
+			wantErr:  true,
+			wantKind: ErrInvalidKind,
 		},
 		{
 			name: "name not kebab-case",

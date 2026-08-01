@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
 )
@@ -12,19 +13,21 @@ import (
 // TransactionalInstaller. Older readers may still understand prior versions.
 const LabelSchemaVersion = 1
 
+const rollbackTimeout = 5 * time.Second
+
 // TransactionalInstaller is the target-neutral implementation of the
 // inventory.Installer contract. It binds an ArtifactStore, a LabelStore,
-// and a PathResolver at construction time so the per-Install path becomes
+// and an ArtifactResolver at construction time so the per-Install path becomes
 // the pure two-step (artifact write + label set) transaction described in
 // refactoring-interface-design.md.
 type TransactionalInstaller struct {
 	store    ArtifactStore
 	labels   LabelStore
-	resolver *PathResolver
+	resolver ArtifactResolver
 }
 
 // NewTransactionalInstaller validates dependencies and returns an Installer.
-func NewTransactionalInstaller(store ArtifactStore, labels LabelStore, resolver *PathResolver) (*TransactionalInstaller, error) {
+func NewTransactionalInstaller(store ArtifactStore, labels LabelStore, resolver ArtifactResolver) (*TransactionalInstaller, error) {
 	if store == nil {
 		return nil, errors.New("inventory: transactional installer requires artifact store")
 	}
@@ -58,7 +61,7 @@ func (i *TransactionalInstaller) Install(ctx context.Context, scope Scope, artif
 	// Validate scope (and project-root configuration) before parsing the
 	// artifact path so the documented error precedence (scope -> path) is
 	// preserved.
-	if _, err := i.resolver.ResolveRoot(scope); err != nil {
+	if err := i.resolver.ValidateScope(scope); err != nil {
 		return Installation{}, err
 	}
 	rel, err := source.NewArtifactPath(artifact.Path)
@@ -101,10 +104,23 @@ func (i *TransactionalInstaller) Install(ctx context.Context, scope Scope, artif
 		SourceRef:      artifact.SourceRef,
 	}
 	if err := i.labels.Set(ctx, scope, id, data); err != nil {
-		// Best-effort rollback: remove the artifact we just wrote so the
-		// inventory invariant (label-yes <=> file-yes) is preserved.
-		_ = i.store.Remove(ctx, abs)
-		return Installation{}, fmt.Errorf("inventory: set label: %w", err)
+		labelErr := err
+		if errors.Is(labelErr, ErrLabelAlreadyExists) {
+			labelErr = ErrAlreadyInstalled
+		}
+		// Rollback must remain possible after request cancellation; otherwise
+		// the failed transaction leaves an unmanaged artifact behind.
+		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), rollbackTimeout)
+		defer cancel()
+		removeErr := i.store.Remove(rollbackCtx, abs)
+		setErr := fmt.Errorf("inventory: set label: %w", labelErr)
+		if removeErr != nil {
+			return Installation{}, errors.Join(
+				setErr,
+				fmt.Errorf("inventory: rollback artifact: %w", removeErr),
+			)
+		}
+		return Installation{}, setErr
 	}
 
 	return Installation{

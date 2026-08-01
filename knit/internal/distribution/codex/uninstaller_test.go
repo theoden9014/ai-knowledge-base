@@ -95,12 +95,12 @@ func TestUninstaller_Uninstall_ProjectRootNotConfigured(t *testing.T) {
 	userRoot, labels := newTempRootsUserOnly(t)
 	u := must(NewUninstaller(userRoot, "", labels))
 	inst := inventory.Installation{
-		ID: inventory.InstallationID("AGENTS.md"),
+		ID: inventory.InstallationID("skills/a/SKILL.md"),
 		Label: inventory.Label{
 			Target: Target,
 			Scope:  inventory.ScopeProject,
 		},
-		Artifact: source.Artifact{Target: Target, Path: "AGENTS.md"},
+		Artifact: source.Artifact{Target: Target, Path: "skills/a/SKILL.md"},
 	}
 	err := u.Uninstall(context.Background(), inst)
 	if !errors.Is(err, ErrProjectRootNotConfigured) {

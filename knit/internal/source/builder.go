@@ -7,9 +7,7 @@ import "context"
 // implementation under internal/distribution/<target>.
 //
 // Builder receives the whole Pack rather than individual Entries so that an
-// implementation can fold multiple entries into a single artifact (for
-// example concatenating rule entries) or emit auxiliary files alongside the
-// primary one.
+// implementation can emit auxiliary files alongside a primary artifact.
 //
 // Implementations should start from pack.EntriesFor(b.Target()) instead of
 // iterating Pack.Entries directly; that helper applies the single

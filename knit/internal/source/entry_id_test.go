@@ -32,8 +32,8 @@ func TestNewEntryID(t *testing.T) {
 		{name: "double hyphen in name rejected", args: args{s: "pack.skill.foo--bar"}, want: EntryID{}, wantErr: ErrInvalidEntryID},
 		{name: "skill accepted", args: args{s: "structure-behavior-design.skill.orchestrator"}, want: EntryID{pack: "structure-behavior-design", kind: KindSkill, name: "orchestrator"}, wantErr: nil},
 		{name: "agent accepted", args: args{s: "pack.agent.reviewer"}, want: EntryID{pack: "pack", kind: KindAgent, name: "reviewer"}, wantErr: nil},
-		{name: "rule accepted", args: args{s: "pack.rule.guidelines"}, want: EntryID{pack: "pack", kind: KindRule, name: "guidelines"}, wantErr: nil},
-		{name: "prompt accepted", args: args{s: "pack.prompt.greeting"}, want: EntryID{pack: "pack", kind: KindPrompt, name: "greeting"}, wantErr: nil},
+		{name: "legacy rule rejected", args: args{s: "pack.rule.guidelines"}, want: EntryID{}, wantErr: ErrInvalidEntryID},
+		{name: "legacy prompt rejected", args: args{s: "pack.prompt.greeting"}, want: EntryID{}, wantErr: ErrInvalidEntryID},
 		{name: "digits allowed", args: args{s: "pack1.skill.entry2"}, want: EntryID{pack: "pack1", kind: KindSkill, name: "entry2"}, wantErr: nil},
 		{name: "multi-segment kebab accepted", args: args{s: "a-b-c.skill.x-y-z"}, want: EntryID{pack: "a-b-c", kind: KindSkill, name: "x-y-z"}, wantErr: nil},
 	}

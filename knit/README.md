@@ -6,7 +6,7 @@ It installs and manages tool-neutral "knowledge packs" stored under `knowledge/`
 
 ## Positioning
 
-- It handles knowledge for AI coding tools only (Skill / Agent / Rule / Prompt)
+- It handles knowledge for AI coding tools only (Skill / Agent)
 - It uses package-management vocabulary such as `install` / `uninstall` / `list` / `update` on a per-pack basis
 - It does not provide a remote registry. `knowledge/` is the single local source of truth
 
@@ -27,13 +27,13 @@ Because state is not stored in a separate file, if the user manually deletes a d
 
 | Scope | Example destination |
 |---|---|
-| **user** | Under the home directory, such as `~/.claude/skills/`, `~/.codex/`, `~/.gemini/` |
+| **user** | Under the home directory, such as `~/.claude/skills/`, `~/.agents/skills/`, `~/.codex/agents/`, `~/.gemini/` |
 | **project** | Under the current project (for example, equivalent to `<project>/.claude/skills/`) |
 
-## Subcommands (planned)
+## Subcommands
 
-It is expected to use subcommands such as `install`, `uninstall`, `list`, and `update`. The concrete flag scheme and full subcommand list will be finalized during implementation.
+`build`, `install`, `uninstall`, `list`, and `update` are implemented.
 
 ## Status
 
-Not implemented yet. Only the naming and overall positioning have been decided so far. The implementation plan will be documented separately.
+The neutral two-kind model and Claude Code, Codex, and Gemini CLI targets are implemented.

@@ -7,7 +7,7 @@ import (
 
 // ErrInvalidEntryID is returned when a string is rejected as an EntryID because
 // it does not match <pack>.<kind>.<name> where pack and name are kebab-case and
-// kind is one of the four valid Kinds.
+// kind is one of the two valid Kinds.
 var ErrInvalidEntryID = errors.New("invalid entry id")
 
 // EntryID is the identity of an Entry in the form "<pack>.<kind>.<name>".
@@ -22,7 +22,7 @@ type EntryID struct {
 
 // NewEntryID parses and validates an entry id string. The string must consist
 // of exactly three dot-separated components: a kebab-case pack name, one of
-// the four Kinds, and a kebab-case entry name.
+// the two Kinds, and a kebab-case entry name.
 func NewEntryID(s string) (EntryID, error) {
 	pack, kindStr, name, ok := splitEntryID(s)
 	if !ok {

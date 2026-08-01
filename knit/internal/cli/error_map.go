@@ -48,8 +48,6 @@ import (
 //	distribution/<*>.ErrProjectRootNotConfigured -> ExitConfig
 //	distribution/<*>.ErrUnmanagedArtifactExists  -> ExitConflict
 //	distribution/<*>.ErrInvalidArtifactPath      -> ExitGeneral
-//	distribution/<*>.ErrFrontmatterMergeConflict -> ExitGeneral
-//	gemini.ErrUnsupportedFrontmatterValue        -> ExitGeneral
 //	remote.ErrInvalidLocator                     -> ExitUsage   (malformed URL string)
 //	remote.ErrUnsupportedHost                    -> ExitConfig  (no Fetcher registered = config issue)
 //	remote.ErrCloneFailed                        -> ExitGeneral

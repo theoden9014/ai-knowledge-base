@@ -49,6 +49,34 @@ func TestNewSkillMeta_normal(t *testing.T) {
 	})
 }
 
+func TestNewSkillMetaWithInvocation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		invocation SkillInvocation
+		want       SkillInvocation
+		wantErr    error
+	}{
+		{name: "both", invocation: SkillInvocationBoth, want: SkillInvocationBoth},
+		{name: "manual", invocation: SkillInvocationManual, want: SkillInvocationManual},
+		{name: "empty normalizes to both", invocation: "", want: SkillInvocationBoth},
+		{name: "unknown rejected", invocation: "automatic", wantErr: ErrInvalidSkillInvocation},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			m, err := NewSkillMetaWithInvocation("skills/foo", nil, tt.invocation)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("err = %v, want %v", err, tt.wantErr)
+			}
+			if tt.wantErr == nil && m.Invocation() != tt.want {
+				t.Errorf("Invocation() = %q, want %q", m.Invocation(), tt.want)
+			}
+		})
+	}
+}
+
 func TestNewSkillMeta_invalidRoot(t *testing.T) {
 	t.Parallel()
 	cases := []struct {

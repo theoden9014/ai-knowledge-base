@@ -10,8 +10,8 @@ func TestKind_IsValid(t *testing.T) {
 	}{
 		{name: "skill is valid", k: KindSkill, want: true},
 		{name: "agent is valid", k: KindAgent, want: true},
-		{name: "rule is valid", k: KindRule, want: true},
-		{name: "prompt is valid", k: KindPrompt, want: true},
+		{name: "legacy rule is invalid", k: Kind("rule"), want: false},
+		{name: "legacy prompt is invalid", k: Kind("prompt"), want: false},
 		{name: "unknown value is invalid", k: Kind("unknown"), want: false},
 		{name: "empty string is invalid", k: Kind(""), want: false},
 		{name: "capitalized form is invalid", k: Kind("Skill"), want: false},
@@ -33,8 +33,6 @@ func TestKind_String(t *testing.T) {
 	}{
 		{name: "skill", k: KindSkill, want: "skill"},
 		{name: "agent", k: KindAgent, want: "agent"},
-		{name: "rule", k: KindRule, want: "rule"},
-		{name: "prompt", k: KindPrompt, want: "prompt"},
 		{name: "preserves unknown literal", k: Kind("custom"), want: "custom"},
 		{name: "empty string", k: Kind(""), want: ""},
 	}

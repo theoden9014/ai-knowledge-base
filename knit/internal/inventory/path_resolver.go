@@ -31,6 +31,13 @@ func NewPathResolver(policy PathPolicy, roots InventoryRoots) (*PathResolver, er
 // Target returns the Target this resolver belongs to.
 func (r *PathResolver) Target() source.Target { return r.policy.Target() }
 
+// ValidateScope validates scope and confirms that its inventory root is
+// configured.
+func (r *PathResolver) ValidateScope(scope Scope) error {
+	_, err := r.roots.For(scope)
+	return err
+}
+
 // Resolve validates scope first, then p, and finally joins them. The
 // scope-before-policy ordering matches the error precedence documented in
 // refactoring-interface-design.md (ErrInvalidScope and
@@ -52,3 +59,5 @@ func (r *PathResolver) Resolve(scope Scope, p source.ArtifactPath) (AbsoluteArti
 func (r *PathResolver) ResolveRoot(scope Scope) (InventoryRoot, error) {
 	return r.roots.For(scope)
 }
+
+var _ ArtifactResolver = (*PathResolver)(nil)

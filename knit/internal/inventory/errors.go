@@ -78,6 +78,11 @@ var ErrArtifactPathEscape = errors.New("inventory: artifact path escapes invento
 // empty ArtifactPath).
 var ErrInvalidInstallationID = errors.New("inventory: invalid installation id")
 
+// ErrInstallationIdentityMismatch is returned when persisted LabelData points
+// to an artifact path whose derived ID differs from the requested
+// InstallationID. No filesystem mutation is performed.
+var ErrInstallationIdentityMismatch = errors.New("inventory: installation identity mismatch")
+
 // ErrPruneBoundaryViolation is returned by ArtifactWriter.PruneAncestorsWithin
 // when the requested child path does not lie within the boundary.
 var ErrPruneBoundaryViolation = errors.New("inventory: prune boundary violation")

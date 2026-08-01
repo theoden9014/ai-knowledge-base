@@ -89,8 +89,8 @@ func TestInstaller_Install_InvalidArtifactPath(t *testing.T) {
 		{"empty", ""},
 		{"absolute", "/etc/passwd"},
 		{"parent escape", "../escape.md"},
-		{"unknown top segment", "rules/x.md"},
-		{"prompts subdirectory", "prompts/sub/x.md"},
+		{"legacy rule path", "rules/x.md"},
+		{"legacy prompt path", "prompts/x.md"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

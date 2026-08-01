@@ -9,21 +9,18 @@ import (
 // Builder is the Claude Code implementation of source.Builder.
 //
 // Build delegates the per-kind dispatch to source.RendererRegistry; the
-// per-kind logic lives in skillRenderer, agentRenderer, promptRenderer,
-// and ruleAggregator in this package. Builder itself contains no
+// per-kind logic lives in skillRenderer and agentRenderer in this package.
+// Builder itself contains no
 // switch-on-Kind branching.
 type Builder struct {
 	registry *source.RendererRegistry
 }
 
-// NewBuilder constructs a Builder with the Claude-specific renderers and
-// rule aggregator pre-registered.
+// NewBuilder constructs a Builder with the Claude-specific renderers.
 func NewBuilder() *Builder {
 	r := source.NewRendererRegistry(Target)
 	r.Register(skillRenderer{})
 	r.Register(agentRenderer{})
-	r.Register(promptRenderer{})
-	r.RegisterRuleAggregator(ruleAggregator{})
 	return &Builder{registry: r}
 }
 

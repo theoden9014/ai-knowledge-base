@@ -13,7 +13,18 @@ type Uninstaller struct {
 }
 
 func NewUninstaller(userRoot, projectRoot string, labels inventory.LabelStore) (*Uninstaller, error) {
-	resolver, err := buildResolver(userRoot, projectRoot)
+	return NewUninstallerWithRoots(Roots{
+		UserSkills:    userRoot,
+		ProjectSkills: projectRoot,
+		UserAgents:    userRoot,
+		ProjectAgents: projectRoot,
+	}, labels)
+}
+
+// NewUninstallerWithRoots constructs an Uninstaller with independent roots
+// for skills and agents.
+func NewUninstallerWithRoots(roots Roots, labels inventory.LabelStore) (*Uninstaller, error) {
+	resolver, err := buildResolver(roots)
 	if err != nil {
 		return nil, err
 	}

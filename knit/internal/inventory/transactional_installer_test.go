@@ -3,6 +3,7 @@ package inventory
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"testing"
 
 	"github.com/theoden9014/ai-knowledge-base/knit/internal/source"
@@ -14,6 +15,60 @@ func TestTransactionalInstaller_Target(t *testing.T) {
 	if got := inst.Target(); got != txTestTarget {
 		t.Errorf("Target() = %q, want %q", got, txTestTarget)
 	}
+}
+
+type setFailLabelStore struct {
+	LabelStore
+	err error
+}
+
+func (s setFailLabelStore) Set(context.Context, Scope, InstallationID, LabelData) error {
+	return s.err
+}
+
+type removeFailArtifactStore struct {
+	ArtifactStore
+	err error
+}
+
+func (s removeFailArtifactStore) Remove(context.Context, AbsoluteArtifactPath) error {
+	return s.err
+}
+
+func TestTransactionalInstaller_LabelFailureRollback(t *testing.T) {
+	t.Run("label collision is translated and artifact is removed", func(t *testing.T) {
+		f := newTransactionalFixture(t, true)
+		labels := setFailLabelStore{LabelStore: f.labels, err: ErrLabelAlreadyExists}
+		inst := must(NewTransactionalInstaller(f.store, labels, f.resolver))
+		artifact := sampleArtifact(t, "skills/foo/SKILL.md", txTestTarget)
+
+		_, err := inst.Install(context.Background(), ScopeUser, artifact)
+		if !errors.Is(err, ErrAlreadyInstalled) {
+			t.Fatalf("Install err = %v, want ErrAlreadyInstalled", err)
+		}
+		rel := must(source.NewArtifactPath(artifact.Path))
+		abs := must(f.resolver.Resolve(ScopeUser, rel))
+		if present, _ := f.store.Exists(context.Background(), abs); present {
+			t.Error("artifact remains after label failure rollback")
+		}
+	})
+
+	t.Run("rollback failure is joined with label failure", func(t *testing.T) {
+		f := newTransactionalFixture(t, true)
+		labelErr := errors.New("set failed")
+		removeErr := fs.ErrPermission
+		labels := setFailLabelStore{LabelStore: f.labels, err: labelErr}
+		store := removeFailArtifactStore{ArtifactStore: f.store, err: removeErr}
+		inst := must(NewTransactionalInstaller(store, labels, f.resolver))
+
+		_, err := inst.Install(context.Background(), ScopeUser, sampleArtifact(t, "skills/foo/SKILL.md", txTestTarget))
+		if !errors.Is(err, labelErr) {
+			t.Errorf("Install err = %v, want joined label failure", err)
+		}
+		if !errors.Is(err, removeErr) {
+			t.Errorf("Install err = %v, want joined rollback failure", err)
+		}
+	})
 }
 
 func TestTransactionalInstaller_Install(t *testing.T) {
