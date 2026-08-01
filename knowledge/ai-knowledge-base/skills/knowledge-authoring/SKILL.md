@@ -2,61 +2,175 @@
 id: ai-knowledge-base.skill.knowledge-authoring
 kind: skill
 name: ai-knowledge-base-knowledge-authoring
-description: Author or update tool-neutral knowledge packs in ai-knowledge-base.
+description: |
+  Design, create, update, substantially restructure, and validate tool-neutral knowledge
+  packs in ai-knowledge-base. Use for any change under knowledge/, including new pack
+  boundaries, Skill or Agent responsibility decisions, migrations from commands or prompts,
+  routine entry maintenance, metadata updates, and cross-target validation.
 tags:
   - knowledge
   - authoring
+  - pack-design
   - repository
 ---
 
 # Knowledge Authoring
 
-Use this skill when creating or updating content under `knowledge/` in the
-ai-knowledge-base repository.
+Treat a pack as a cohesive installation and versioning unit, not as a convenient folder for
+unrelated instructions. Scale the workflow to the change: perform explicit design for a new
+pack or a substantial restructure, and use the maintenance path for an established pattern.
 
-## Authoring Flow
+## Read the local contract
 
-1. Inspect the target pack first.
-   - Read `manifest.yaml`.
-   - Read nearby entries of the same kind.
-   - Preserve existing naming, frontmatter, and tone unless there is a clear
-     reason to change them.
-2. Choose the right entry kind.
-   - Use `skill` for reusable procedures, workflows, checklists, viewpoints, or
-     output formats.
-   - Use `agent` for a specialist role that can operate in an isolated context.
-   - Put always-on instructions in the narrowest applicable repository-native
-     instruction file, not in a pack entry.
-   - Represent reusable prompt or command-style entry points as skills with
-     `invocation: manual`.
-3. Add or update the manifest entry.
-   - Entry id format is `<pack>.<kind>.<name>`.
-   - Skill paths are directories: `skills/<name>`.
-   - Agent paths are files: `agents/<name>.md`.
-4. Add or update the entry source.
-   - Skills place their body in `skills/<name>/SKILL.md`.
-   - Other entry kinds are single markdown files.
-   - YAML frontmatter must include `id`, `kind`, `name`, and `description`.
-   - The frontmatter `id` must exactly match the manifest entry id.
-5. Keep the content tool-neutral.
-   - Describe concepts and workflows independently of Claude, Codex, Gemini, or
-     another target unless the entry is intentionally target-specific.
-   - Use `tools.<target>` only for target-specific frontmatter or enablement.
-6. Validate before finishing.
-   - Run `go test ./...` from `knit/`.
-   - If local sandboxing blocks the default Go caches, run with `GOCACHE` and
-     `GOMODCACHE` pointed at writable directories inside the repository or
-     `/tmp`.
+Before editing:
 
-## Quality Bar
+1. Read every applicable `AGENTS.md`.
+2. Read the root README, the current knowledge-format documentation, and the live schemas.
+3. Inspect the target pack and at least one similar entry.
+4. Inspect target builders when target-specific behavior matters.
+5. Check `git status` and preserve unrelated work.
 
-- A skill should say when to use it, what context to inspect, what steps to
-  follow, and what output or verification is expected.
-- An agent should define its role, scope, inputs, review criteria, and output
-  format.
-- A manual skill should be directly executable and make required inputs clear.
-- Repository-native instructions should contain only broadly applicable
-  invariants and routing to narrower guidance.
-- Prefer concrete repository paths and id examples over generic prose.
-- Avoid duplicating large sections from another entry. Extract shared guidance
-  into a separate skill only when it will be reused.
+Treat schemas and builder behavior as the executable contract. If documentation, schemas, and
+builders disagree, report and resolve the mismatch instead of guessing.
+
+## Select the path
+
+Use the **design path** when any of these are true:
+
+- creating a pack
+- splitting, merging, or substantially restructuring a pack
+- deciding whether content belongs in a Skill, Agent, persistent instruction, runtime prompt,
+  canonical documentation, or enforcement
+- migrating custom commands, custom prompts, or generic rules
+- introducing a new public capability or unclear responsibility boundary
+
+Use the **maintenance path** when the target pack and entry pattern are already established and
+the change is limited to content, metadata, resources, or a compatible entry addition.
+
+For the design path, read
+[placement-guide.md](references/placement-guide.md),
+[responsibility-guide.md](references/responsibility-guide.md), and
+[quality-checklist.md](references/quality-checklist.md). For routine maintenance, read only the
+quality checklist sections relevant to the change.
+
+## Design a pack
+
+### 1. Establish the charter
+
+Record:
+
+- intended users and recurring outcome
+- two or three representative requests
+- non-goals
+- supported targets
+- why the entries share one install and version lifecycle
+
+Split capabilities that do not share a domain, audience, or change lifecycle. A one-entry pack
+is valid when independently useful.
+
+### 2. Place responsibilities
+
+Use Skills for reusable procedures, domain knowledge, checklists, or output contracts. Use
+Agents only when isolated context, a specialist role, restricted tools, delegation, or
+independent judgment is essential.
+
+Use only the current neutral kinds: `skill` and `agent`. Do not introduce a knowledge kind merely
+to encode an invocation style or scope. Model reusable command and prompt workflows as Skills
+with `invocation: manual`. Keep durable repository guidance in the narrowest applicable
+persistent instruction file, canonical project information in documentation, current intent in
+the runtime prompt, and deterministic guarantees in code or policy.
+
+Keep each public Skill independently invocable and self-contained. The current neutral schema
+does not encode Skill-to-Skill or Skill-to-Agent dependencies. It encodes only Agent-to-Skill
+references through `uses_skills`, and not every target preserves them. Use a dependency only
+when the schema and every enabled target represent its required behavior; otherwise make the
+entry self-contained or disable the unsupported target. Reject cycles, duplicated
+responsibilities, and required dependencies hidden only in prose.
+
+### 3. Name entries
+
+Use a short kebab-case pack name and a concise local entry key. Prefix the public artifact name
+with the pack name, but do not repeat that prefix in the entry key, ID suffix, or path:
+
+```text
+pack:        git-pr-workflow
+entry:       review-fix
+public name: git-pr-workflow-review-fix
+entry id:    git-pr-workflow.skill.review-fix
+source path: skills/review-fix
+```
+
+### 4. Produce the artifact plan
+
+List each proposed entry before editing:
+
+| ID | Kind | Path | Responsibility | Trigger or caller | Dependencies | Targets | Resources |
+|---|---|---|---|---|---|---|---|
+
+Verify that each responsibility has one owner. For every required dependency, identify its
+schema field and confirm that every enabled target preserves it. Redesign dependencies that
+cannot pass this check. Remove entries that only rename another entry or repeat repository-wide
+guidance.
+
+## Author or maintain the pack
+
+1. Update `knowledge/<pack>/manifest.yaml`.
+2. Add or update each source in the path required by the live schema.
+3. Keep IDs, paths, names, and manifest entries one-to-one.
+4. Keep the body tool-neutral. Add target-specific metadata only through a field or resource
+   that the current schema and builder can scope to that target.
+5. Set `invocation: manual` for command-like Skills that must not be selected implicitly; omit
+   it when implicit and explicit invocation are both safe.
+6. Add Skill resources only when they improve repeatability:
+   - `scripts/` for deterministic repeated operations
+   - `references/` for detailed knowledge loaded on demand
+   - `assets/` for files copied or transformed into outputs
+7. Write Skill descriptions as trigger contracts containing the action, positive triggers, and
+   meaningful exclusions. Keep the main file concise and link directly to optional references.
+8. Give each Agent a narrow role, explicit inputs, boundaries, and output contract. Use
+   `uses_skills` only when every enabled target preserves the dependency; otherwise make the
+   Agent self-contained or disable the unsupported target.
+
+Do not add a target-specific sibling such as `agents/openai.yaml` to a Skill that is also
+enabled for other targets: the builder copies every sibling to every target enabled for that
+entry. A target-only entry may carry its target's supported siblings, but first verify that the
+current schema, builder, and distribution documentation agree.
+
+Do not add auxiliary README, changelog, installation, or quick-reference files inside a Skill.
+Do not weaken schemas or builder tests to accept malformed content.
+
+## Validate
+
+Validate in this order:
+
+1. Check manifest, frontmatter, IDs, paths, names, and dependencies against the live schemas.
+2. Confirm there are no missing, duplicate, or orphaned entries.
+3. Run repository tests:
+
+   ```bash
+   go -C knit test ./...
+   ```
+
+4. Build the affected pack for every enabled target:
+
+   ```bash
+   go -C knit run . build --target=<target> -o <temporary-output-dir>/<target> ../knowledge/<pack>
+   ```
+
+5. Inspect the emitted files, paths, and metadata in each target's output directory, not only
+   command success.
+6. Test representative trigger and non-trigger requests for public Skills.
+7. Run `git diff --check` and inspect the complete diff.
+
+If sandboxing blocks Go caches, point `GOCACHE` and `GOMODCACHE` at writable task-specific
+directories.
+
+## Report completion
+
+Return:
+
+1. the charter and artifact plan for design-path changes
+2. files created or changed
+3. material placement, responsibility, and naming decisions
+4. validation commands and results for every enabled target
+5. remaining limitations or follow-up work
