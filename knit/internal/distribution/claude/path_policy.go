@@ -12,10 +12,8 @@ import (
 // the single flat file allowed at the inventory root.
 //
 // Accepted artifact paths:
-//   - CLAUDE.md (flat, at the root)
 //   - skills/<...>
 //   - agents/<...>
-//   - commands/<...>
 type pathPolicy struct{}
 
 // newPathPolicy returns the singleton-style PathPolicy for Claude. The
@@ -32,13 +30,7 @@ func (pathPolicy) Validate(p source.ArtifactPath) error {
 	}
 	top := p.TopSegment()
 	switch top {
-	case "CLAUDE.md":
-		if p.String() != "CLAUDE.md" {
-			// CLAUDE.md must be the entire path; reject "CLAUDE.md/x".
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	case "skills", "agents", "commands":
+	case "skills", "agents":
 		if p.String() == top {
 			// Bare top segment with no child is not a valid artifact path.
 			return source.ErrInvalidArtifactPath

@@ -62,16 +62,14 @@ func Test_errorToExitCode(t *testing.T) {
 		{name: "claude.ErrProjectRootNotConfigured → ExitConfig", args: args{err: claude.ErrProjectRootNotConfigured}, want: ExitConfig},
 		{name: "claude.ErrUnmanagedArtifactExists → ExitConflict", args: args{err: claude.ErrUnmanagedArtifactExists}, want: ExitConflict},
 		{name: "claude.ErrInvalidArtifactPath → ExitGeneral", args: args{err: claude.ErrInvalidArtifactPath}, want: ExitGeneral},
-		{name: "claude.ErrFrontmatterMergeConflict → ExitGeneral", args: args{err: claude.ErrFrontmatterMergeConflict}, want: ExitGeneral},
 		{name: "codex.ErrProjectRootNotConfigured → ExitConfig", args: args{err: codex.ErrProjectRootNotConfigured}, want: ExitConfig},
 		{name: "codex.ErrUnmanagedArtifactExists → ExitConflict", args: args{err: codex.ErrUnmanagedArtifactExists}, want: ExitConflict},
 		{name: "codex.ErrInvalidArtifactPath → ExitGeneral", args: args{err: codex.ErrInvalidArtifactPath}, want: ExitGeneral},
-		{name: "codex.ErrFrontmatterMergeConflict → ExitGeneral", args: args{err: codex.ErrFrontmatterMergeConflict}, want: ExitGeneral},
+		{name: "codex.ErrInvalidSkillMetadata → ExitGeneral", args: args{err: codex.ErrInvalidSkillMetadata}, want: ExitGeneral},
 		{name: "gemini.ErrProjectRootNotConfigured → ExitConfig", args: args{err: gemini.ErrProjectRootNotConfigured}, want: ExitConfig},
 		{name: "gemini.ErrUnmanagedArtifactExists → ExitConflict", args: args{err: gemini.ErrUnmanagedArtifactExists}, want: ExitConflict},
 		{name: "gemini.ErrInvalidArtifactPath → ExitGeneral", args: args{err: gemini.ErrInvalidArtifactPath}, want: ExitGeneral},
-		{name: "gemini.ErrFrontmatterMergeConflict → ExitGeneral", args: args{err: gemini.ErrFrontmatterMergeConflict}, want: ExitGeneral},
-		{name: "gemini.ErrUnsupportedFrontmatterValue → ExitGeneral", args: args{err: gemini.ErrUnsupportedFrontmatterValue}, want: ExitGeneral},
+		{name: "gemini.ErrUnsupportedSkillInvocation → ExitGeneral", args: args{err: gemini.ErrUnsupportedSkillInvocation}, want: ExitGeneral},
 
 		// remote sentinels (Wave4)
 		{name: "remote.ErrInvalidLocator → ExitUsage", args: args{err: remote.ErrInvalidLocator}, want: ExitUsage},

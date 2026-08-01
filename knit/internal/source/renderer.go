@@ -7,7 +7,7 @@ import (
 )
 
 // ErrUnsupportedKind is returned by RendererRegistry.Build when an entry's
-// Kind has no renderer or aggregator registered for the target.
+// Kind has no renderer registered for the target.
 var ErrUnsupportedKind = errors.New("source: unsupported kind")
 
 // KindRenderer converts a single Entry into one or more target-specific
@@ -35,25 +35,12 @@ type KindRenderer interface {
 	Render(entry *Entry, pack *Pack) ([]Artifact, error)
 }
 
-// RuleAggregator folds every KindRule entry in a pack into a single
-// Artifact (CLAUDE.md / AGENTS.md / GEMINI.md). Targets that do not
-// support rule aggregation omit this implementation; RendererRegistry
-// returns ErrUnsupportedKind when a rule entry is encountered without an
-// aggregator.
-type RuleAggregator interface {
-	// Aggregate produces the single Artifact representing every entry. The
-	// caller has already filtered the slice to KindRule entries in
-	// manifest order.
-	Aggregate(entries []*Entry, pack *Pack) (Artifact, error)
-}
-
 // RendererRegistry is the per-target table that maps Kind to the right
-// renderer or aggregator. Builder implementations construct a Registry at
+// renderer. Builder implementations construct a Registry at
 // initialization time, then call Build for each pack.
 type RendererRegistry struct {
-	target     Target
-	renderers  map[Kind]KindRenderer
-	aggregator RuleAggregator
+	target    Target
+	renderers map[Kind]KindRenderer
 }
 
 // NewRendererRegistry returns an empty Registry bound to target.
@@ -70,19 +57,11 @@ func (r *RendererRegistry) Register(renderer KindRenderer) {
 	r.renderers[renderer.Kind()] = renderer
 }
 
-// RegisterRuleAggregator installs aggregator as the rule handler. Calling
-// twice overwrites the previous aggregator.
-func (r *RendererRegistry) RegisterRuleAggregator(aggregator RuleAggregator) {
-	r.aggregator = aggregator
-}
-
 // Target returns the target this registry serves.
 func (r *RendererRegistry) Target() Target { return r.target }
 
 // Build walks pack.EntriesFor(target) and produces artifacts using the
-// registered renderers. Rule entries are buffered and folded by the
-// registered RuleAggregator (if any) into a single Artifact appended at
-// the end of the result.
+// registered renderers.
 //
 // A nil pack returns (nil, nil) so the contract matches across every
 // target Builder rather than depending on each implementation to guard.
@@ -91,17 +70,10 @@ func (r *RendererRegistry) Build(ctx context.Context, pack *Pack) ([]Artifact, e
 		return nil, nil
 	}
 	entries := pack.EntriesFor(r.target)
-	var (
-		artifacts []Artifact
-		ruleBuf   []*Entry
-	)
+	var artifacts []Artifact
 	for _, e := range entries {
 		if err := ctx.Err(); err != nil {
 			return nil, err
-		}
-		if e.Kind == KindRule {
-			ruleBuf = append(ruleBuf, e)
-			continue
 		}
 		renderer, ok := r.renderers[e.Kind]
 		if !ok {
@@ -115,16 +87,6 @@ func (r *RendererRegistry) Build(ctx context.Context, pack *Pack) ([]Artifact, e
 			return nil, fmt.Errorf("%w: renderer returned no artifacts: kind=%s entry=%s target=%s", ErrUnsupportedKind, e.Kind, e.ID, r.target)
 		}
 		artifacts = append(artifacts, arts...)
-	}
-	if len(ruleBuf) > 0 {
-		if r.aggregator == nil {
-			return nil, fmt.Errorf("%w: kind=rule target=%s (no aggregator registered)", ErrUnsupportedKind, r.target)
-		}
-		art, err := r.aggregator.Aggregate(ruleBuf, pack)
-		if err != nil {
-			return nil, err
-		}
-		artifacts = append(artifacts, art)
 	}
 	return artifacts, nil
 }

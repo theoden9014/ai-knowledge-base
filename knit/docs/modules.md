@@ -27,7 +27,7 @@ knit/
 |---|---|
 | `cli` | Defines and assembles the subcommand tree. It combines `source`, `inventory`, and `distribution` to implement subcommand behavior |
 | `source` | **Source-side framework**. Defines neutral data types and source-side interfaces. Target-independent shared processing such as Loader and Validator is implemented here |
-| `inventory` | **Distribution-side framework**. Defines destination-side data types and interfaces. Target-independent shared logic such as Label handling is implemented here |
+| `inventory` | **Distribution-side framework**. Defines destination-side data types and interfaces. Target-independent transaction, label, and artifact-resolution contracts are implemented here |
 | `distribution/<target>` | **Concrete implementation for each Target**. Target-specific implementations of Builder, Installer, Uninstaller, and Lister live together here. Knowledge specific to each Target, such as distribution paths, format conversion, and Labeling, is consolidated into a single package |
 
 ## Ownership of Data Types
@@ -35,7 +35,7 @@ knit/
 | Concept | Package |
 |---|---|
 | Pack, Entry, Kind, Target, Artifact | `source` |
-| Installation, Label, Scope | `inventory` |
+| Installation, Label, Scope, ArtifactResolver | `inventory` |
 
 The `Target` type belongs to the `source` domain because it represents the Target returned by the Builder, and `inventory` refers to the `source.Target` type.
 
@@ -66,5 +66,6 @@ inventory ──> source                      (references the Target type)
 ## Design Effects
 
 - **All Target-specific code is centralized in `distribution/<target>`**. Because Builder conversion logic and Installer placement logic live together per Target, changes for that Target stay within one package
+- **Logical artifact paths are independent of physical roots**. A target may route artifact families to different roots through `inventory.ArtifactResolver` (Codex routes skills to `.agents` and agents to `.codex`)
 - **Adding a new Target only requires creating `distribution/<new-target>/` and implementing `source.Builder` plus `inventory.Installer` / `Uninstaller` / `Lister`**. `source` and `inventory` do not need to change
 - **`source` and `inventory` remain stable as frameworks**. They are not affected by Target-specific differences

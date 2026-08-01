@@ -4,8 +4,7 @@ import "io/fs"
 
 // Artifact is a single file produced by a Builder for one Target. A Builder
 // may emit multiple Artifacts for a single Pack (for example one SKILL.md per
-// skill entry plus auxiliary files), and may also fold several Entries into
-// one Artifact (for example collapsing all rules into a single file).
+// skill entry plus auxiliary files).
 type Artifact struct {
 	// Target identifies the distribution target that owns this artifact.
 	Target Target

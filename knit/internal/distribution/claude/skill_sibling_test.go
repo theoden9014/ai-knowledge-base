@@ -19,6 +19,15 @@ func mustSkillMetaT(t *testing.T, root string, assets ...source.SkillAsset) *sou
 	return m
 }
 
+func mustManualSkillMetaT(t *testing.T, root string, assets ...source.SkillAsset) *source.SkillMeta {
+	t.Helper()
+	m, err := source.NewSkillMetaWithInvocation(root, assets, source.SkillInvocationManual)
+	if err != nil {
+		t.Fatalf("NewSkillMetaWithInvocation: %v", err)
+	}
+	return m
+}
+
 func mustSkillAssetT(t *testing.T, p string, content []byte) source.SkillAsset {
 	t.Helper()
 	a, err := source.NewSkillAsset(p, content)
@@ -150,6 +159,37 @@ func TestBuilder_skillFrontmatterMergeOrder(t *testing.T) {
 	}
 	if !bytes.Contains(body, []byte("extra: added")) {
 		t.Errorf("target-added frontmatter missing; content=%s", body)
+	}
+}
+
+func TestBuilder_manualSkillDisablesModelInvocation(t *testing.T) {
+	t.Parallel()
+	pack := &source.Pack{
+		Name:         "p",
+		DefaultTools: []source.Target{Target},
+		Entries: []source.Entry{{
+			ID:          "p.skill.manual",
+			Kind:        source.KindSkill,
+			Name:        "p-manual",
+			Description: "manual skill",
+			Path:        "skills/manual",
+			Body:        []byte("body\n"),
+			Skill:       mustManualSkillMetaT(t, "skills/manual"),
+			Tools: map[source.Target]source.ToolConfig{
+				Target: {Frontmatter: map[string]any{"disable-model-invocation": false}},
+			},
+		}},
+	}
+
+	arts, err := NewBuilder().Build(context.Background(), pack)
+	if err != nil {
+		t.Fatalf("Build err: %v", err)
+	}
+	if len(arts) != 1 {
+		t.Fatalf("len(arts) = %d, want 1", len(arts))
+	}
+	if !bytes.Contains(arts[0].Content, []byte("disable-model-invocation: true")) {
+		t.Errorf("manual skill frontmatter missing disable-model-invocation: %s", arts[0].Content)
 	}
 }
 

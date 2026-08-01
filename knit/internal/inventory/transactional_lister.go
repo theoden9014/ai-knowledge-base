@@ -16,13 +16,13 @@ import (
 type TransactionalLister struct {
 	reader   ArtifactReader
 	labels   LabelStore
-	resolver *PathResolver
+	resolver ArtifactResolver
 }
 
 // NewTransactionalLister validates dependencies and returns a Lister. It
 // accepts ArtifactReader rather than ArtifactStore so list-only paths
 // cannot mutate the storage backend.
-func NewTransactionalLister(reader ArtifactReader, labels LabelStore, resolver *PathResolver) (*TransactionalLister, error) {
+func NewTransactionalLister(reader ArtifactReader, labels LabelStore, resolver ArtifactResolver) (*TransactionalLister, error) {
 	if reader == nil {
 		return nil, errors.New("inventory: transactional lister requires artifact reader")
 	}
@@ -46,7 +46,7 @@ func (l *TransactionalLister) List(ctx context.Context, scope Scope) ([]Installa
 	}
 	// Validate scope (and the project-root configuration when applicable)
 	// before talking to the label store.
-	if _, err := l.resolver.ResolveRoot(scope); err != nil {
+	if err := l.resolver.ValidateScope(scope); err != nil {
 		return nil, err
 	}
 	entries, err := l.labels.List(ctx, scope)

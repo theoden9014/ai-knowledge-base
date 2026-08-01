@@ -11,10 +11,8 @@ import (
 // distribution target.
 //
 // Accepted artifact paths:
-//   - GEMINI.md
 //   - skills/<...>
 //   - agents/<...>
-//   - commands/<...>
 type pathPolicy struct{}
 
 func newPathPolicy() pathPolicy { return pathPolicy{} }
@@ -27,12 +25,7 @@ func (pathPolicy) Validate(p source.ArtifactPath) error {
 	}
 	full := p.String()
 	switch p.TopSegment() {
-	case "GEMINI.md":
-		if full != "GEMINI.md" {
-			return source.ErrInvalidArtifactPath
-		}
-		return nil
-	case "skills", "agents", "commands":
+	case "skills", "agents":
 		if full == p.TopSegment() {
 			return source.ErrInvalidArtifactPath
 		}

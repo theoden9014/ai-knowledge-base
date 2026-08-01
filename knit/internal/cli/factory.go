@@ -75,9 +75,9 @@ type targetProvider struct {
 	userRoot func(f *DistributionFactory) string
 
 	newBuilder     func() source.Builder
-	newInstaller   func(userRoot, projectRoot string, labels inventory.LabelStore) (inventory.Installer, error)
-	newUninstaller func(userRoot, projectRoot string, labels inventory.LabelStore) (inventory.Uninstaller, error)
-	newLister      func(userRoot, projectRoot string, labels inventory.LabelStore) (inventory.Lister, error)
+	newInstaller   func(*DistributionFactory, inventory.LabelStore) (inventory.Installer, error)
+	newUninstaller func(*DistributionFactory, inventory.LabelStore) (inventory.Uninstaller, error)
+	newLister      func(*DistributionFactory, inventory.LabelStore) (inventory.Lister, error)
 }
 
 // providers is the single source of truth for "which distribution
@@ -88,14 +88,14 @@ var providers = []targetProvider{
 		userSubdir:    ".claude",
 		projectSubdir: ".claude",
 		newBuilder:    func() source.Builder { return claude.NewBuilder() },
-		newInstaller: func(u, p string, l inventory.LabelStore) (inventory.Installer, error) {
-			return claude.NewInstaller(u, p, l)
+		newInstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Installer, error) {
+			return claude.NewInstaller(joinRoot(f.userBase, ".claude"), joinRoot(f.projectRoot, ".claude"), l)
 		},
-		newUninstaller: func(u, p string, l inventory.LabelStore) (inventory.Uninstaller, error) {
-			return claude.NewUninstaller(u, p, l)
+		newUninstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Uninstaller, error) {
+			return claude.NewUninstaller(joinRoot(f.userBase, ".claude"), joinRoot(f.projectRoot, ".claude"), l)
 		},
-		newLister: func(u, p string, l inventory.LabelStore) (inventory.Lister, error) {
-			return claude.NewLister(u, p, l)
+		newLister: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Lister, error) {
+			return claude.NewLister(joinRoot(f.userBase, ".claude"), joinRoot(f.projectRoot, ".claude"), l)
 		},
 	},
 	{
@@ -114,14 +114,14 @@ var providers = []targetProvider{
 			return filepath.Join(f.userBase, ".codex")
 		},
 		newBuilder: func() source.Builder { return codex.NewBuilder() },
-		newInstaller: func(u, p string, l inventory.LabelStore) (inventory.Installer, error) {
-			return codex.NewInstaller(u, p, l)
+		newInstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Installer, error) {
+			return codex.NewInstallerWithRoots(codex.DefaultRoots(f.userBase, f.projectRoot, f.codexHome), l)
 		},
-		newUninstaller: func(u, p string, l inventory.LabelStore) (inventory.Uninstaller, error) {
-			return codex.NewUninstaller(u, p, l)
+		newUninstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Uninstaller, error) {
+			return codex.NewUninstallerWithRoots(codex.DefaultRoots(f.userBase, f.projectRoot, f.codexHome), l)
 		},
-		newLister: func(u, p string, l inventory.LabelStore) (inventory.Lister, error) {
-			return codex.NewLister(u, p, l)
+		newLister: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Lister, error) {
+			return codex.NewListerWithRoots(codex.DefaultRoots(f.userBase, f.projectRoot, f.codexHome), l)
 		},
 	},
 	{
@@ -129,14 +129,14 @@ var providers = []targetProvider{
 		userSubdir:    ".gemini",
 		projectSubdir: ".gemini",
 		newBuilder:    func() source.Builder { return gemini.NewBuilder() },
-		newInstaller: func(u, p string, l inventory.LabelStore) (inventory.Installer, error) {
-			return gemini.NewInstaller(u, p, l)
+		newInstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Installer, error) {
+			return gemini.NewInstaller(joinRoot(f.userBase, ".gemini"), joinRoot(f.projectRoot, ".gemini"), l)
 		},
-		newUninstaller: func(u, p string, l inventory.LabelStore) (inventory.Uninstaller, error) {
-			return gemini.NewUninstaller(u, p, l)
+		newUninstaller: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Uninstaller, error) {
+			return gemini.NewUninstaller(joinRoot(f.userBase, ".gemini"), joinRoot(f.projectRoot, ".gemini"), l)
 		},
-		newLister: func(u, p string, l inventory.LabelStore) (inventory.Lister, error) {
-			return gemini.NewLister(u, p, l)
+		newLister: func(f *DistributionFactory, l inventory.LabelStore) (inventory.Lister, error) {
+			return gemini.NewLister(joinRoot(f.userBase, ".gemini"), joinRoot(f.projectRoot, ".gemini"), l)
 		},
 	},
 }
@@ -198,7 +198,7 @@ func (f *DistributionFactory) Installer(target source.Target) (inventory.Install
 	if err != nil {
 		return nil, err
 	}
-	return p.newInstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
+	return p.newInstaller(f, f.labelStoreFor(target))
 }
 
 // Uninstaller returns the inventory.Uninstaller for target.
@@ -207,7 +207,7 @@ func (f *DistributionFactory) Uninstaller(target source.Target) (inventory.Unins
 	if err != nil {
 		return nil, err
 	}
-	return p.newUninstaller(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
+	return p.newUninstaller(f, f.labelStoreFor(target))
 }
 
 // Lister returns the inventory.Lister for target.
@@ -216,7 +216,7 @@ func (f *DistributionFactory) Lister(target source.Target) (inventory.Lister, er
 	if err != nil {
 		return nil, err
 	}
-	return p.newLister(f.userRootFor(target), f.projectRootFor(target), f.labelStoreFor(target))
+	return p.newLister(f, f.labelStoreFor(target))
 }
 
 // userRootFor returns the absolute ScopeUser Inventory root path for the
@@ -284,4 +284,11 @@ func labelsRootOrEmpty(knitRoot string) string {
 		return ""
 	}
 	return filepath.Join(knitRoot, "labels")
+}
+
+func joinRoot(base, subdir string) string {
+	if base == "" {
+		return ""
+	}
+	return filepath.Join(base, subdir)
 }

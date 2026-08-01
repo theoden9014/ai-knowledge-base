@@ -26,7 +26,7 @@ import (
 //   - ScopeProject: projectLabelsRoot (typically "<project>/.knit/labels")
 //
 // This knit root is kept separate from the roots of the AI tools themselves
-// (~/.claude, ~/.codex, ~/.gemini for Claude, Codex, Gemini, etc.). That
+// (~/.claude, ~/.agents, ~/.codex, ~/.gemini, etc.). That
 // avoids mixing knit-managed metadata into the tool directories and lets users
 // continue managing only the AI tool configuration files separately.
 //

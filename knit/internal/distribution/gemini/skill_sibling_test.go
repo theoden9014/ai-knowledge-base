@@ -2,6 +2,7 @@ package gemini
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"testing"
 
@@ -13,6 +14,15 @@ func mustSkillMetaT(t *testing.T, root string, assets ...source.SkillAsset) *sou
 	m, err := source.NewSkillMeta(root, assets)
 	if err != nil {
 		t.Fatalf("NewSkillMeta: %v", err)
+	}
+	return m
+}
+
+func mustManualSkillMetaT(t *testing.T, root string, assets ...source.SkillAsset) *source.SkillMeta {
+	t.Helper()
+	m, err := source.NewSkillMetaWithInvocation(root, assets, source.SkillInvocationManual)
+	if err != nil {
+		t.Fatalf("NewSkillMetaWithInvocation: %v", err)
 	}
 	return m
 }
@@ -64,5 +74,53 @@ func TestGeminiBuilder_skillWithSiblings(t *testing.T) {
 		if len(a.SourceEntryIDs) != 1 || a.SourceEntryIDs[0] != "p.skill.a" {
 			t.Errorf("artifact %s SourceEntryIDs = %v, want [p.skill.a]", a.Path, a.SourceEntryIDs)
 		}
+	}
+}
+
+func TestGeminiBuilder_manualSkillIsUnsupported(t *testing.T) {
+	t.Parallel()
+	pack := &source.Pack{
+		Name:         "p",
+		DefaultTools: []source.Target{Target},
+		Entries: []source.Entry{{
+			ID:    "p.skill.manual",
+			Kind:  source.KindSkill,
+			Name:  "p-manual",
+			Path:  "skills/manual",
+			Body:  []byte("body\n"),
+			Skill: mustManualSkillMetaT(t, "skills/manual"),
+		}},
+	}
+
+	_, err := NewBuilder().Build(context.Background(), pack)
+	if !errors.Is(err, ErrUnsupportedSkillInvocation) {
+		t.Fatalf("Build err = %v, want ErrUnsupportedSkillInvocation", err)
+	}
+}
+
+func TestGeminiBuilder_disabledManualSkillIsSkipped(t *testing.T) {
+	t.Parallel()
+	disabled := false
+	pack := &source.Pack{
+		Name: "p",
+		Entries: []source.Entry{{
+			ID:    "p.skill.manual",
+			Kind:  source.KindSkill,
+			Name:  "p-manual",
+			Path:  "skills/manual",
+			Body:  []byte("body\n"),
+			Skill: mustManualSkillMetaT(t, "skills/manual"),
+			Tools: map[source.Target]source.ToolConfig{
+				Target: {Enabled: &disabled},
+			},
+		}},
+	}
+
+	arts, err := NewBuilder().Build(context.Background(), pack)
+	if err != nil {
+		t.Fatalf("Build err = %v, want nil for disabled entry", err)
+	}
+	if len(arts) != 0 {
+		t.Errorf("len(arts) = %d, want 0", len(arts))
 	}
 }

@@ -2,7 +2,7 @@
 
 An open repository for managing reusable AI coding knowledge across tools such as Claude Code, Codex CLI, and Gemini CLI.
 
-The repository keeps prompts, skills, agents, and always-on rules in a tool-neutral source format under `knowledge/`, then converts and installs them into each tool's local configuration layout through [`knit`](./knit/README.md).
+The repository keeps skills and agents in a tool-neutral source format under `knowledge/`, then converts and installs them into each tool's local configuration layout through [`knit`](./knit/README.md).
 
 ## What This Repository Is For
 
@@ -20,19 +20,18 @@ knowledge/   ->   tool-neutral source
 knit        ->   build and install for each target tool
       |
       v
-tool config directories such as ~/.claude/ and ~/.gemini/
+tool config directories such as ~/.claude/, ~/.agents/, ~/.codex/, and ~/.gemini/
 ```
 
-This repository uses four tool-neutral kinds:
+This repository uses two tool-neutral kinds:
 
 | kind | purpose |
 | ---- | ------- |
 | `skill` | Reusable procedures, viewpoints, and output formats for a task |
 | `agent` | A specialist role, such as a reviewer operating in an isolated context |
-| `rule` | Instructions that should always apply |
-| `prompt` | Reusable prompts or slash-command style entry points |
-
-These kinds are internal abstractions. Each target tool may map them differently.
+Custom commands/prompts are modeled as manually invoked skills. Repository
+instructions such as `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` are repository
+governance, not distributable pack entries.
 
 ## Repository Layout
 
@@ -44,14 +43,14 @@ ai-knowledge-base/
 │   └── <pack-name>/
 │       ├── manifest.yaml
 │       ├── skills/
-│       ├── agents/
-│       ├── rules/
-│       └── prompts/
+│       └── agents/
 ├── knit/                 # build/install tool
 └── schema/               # validation schemas
 ```
 
 The content model is documented in [docs/knowledge-format.md](./docs/knowledge-format.md).
+Use [docs/authoring-guidelines.md](./docs/authoring-guidelines.md) to decide
+whether guidance belongs in repository instructions, a skill, or an agent.
 
 ## Tool Support
 

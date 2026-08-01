@@ -16,6 +16,10 @@ func skillBody(id, name string) string {
 	return "---\nid: " + id + "\nkind: skill\nname: " + name + "\ndescription: d\n---\nbody\n"
 }
 
+func manualSkillBody(id, name string) string {
+	return "---\nid: " + id + "\nkind: skill\nname: " + name + "\ndescription: d\ninvocation: manual\n---\nbody\n"
+}
+
 func loadSkill(t *testing.T, fsys fstest.MapFS) *Pack {
 	t.Helper()
 	l := newLoaderForTest(t)
@@ -80,6 +84,20 @@ func TestLoader_skillWithoutSiblings(t *testing.T) {
 	}
 	if got := pack.Entries[0].Skill.Assets(); len(got) != 0 {
 		t.Errorf("Assets len = %d, want 0", len(got))
+	}
+	if got := pack.Entries[0].Skill.Invocation(); got != SkillInvocationBoth {
+		t.Errorf("Invocation() = %q, want %q", got, SkillInvocationBoth)
+	}
+}
+
+func TestLoader_manualSkill(t *testing.T) {
+	fsys := fstest.MapFS{
+		"p/manifest.yaml":     {Data: []byte(skillManifest("p.skill.a", "skills/a"))},
+		"p/skills/a/SKILL.md": {Data: []byte(manualSkillBody("p.skill.a", "p-a"))},
+	}
+	pack := loadSkill(t, fsys)
+	if got := pack.Entries[0].Skill.Invocation(); got != SkillInvocationManual {
+		t.Errorf("Invocation() = %q, want %q", got, SkillInvocationManual)
 	}
 }
 

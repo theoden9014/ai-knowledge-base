@@ -18,10 +18,7 @@ var ErrProjectRootNotConfigured = errors.New("codex: project root not configured
 //   - a path that escapes the inventory root via a parent-directory reference
 //     such as ".."
 //   - a path whose leading segment does not match the Codex CLI directory
-//     conventions; this package only accepts "skills/", "agents/",
-//     "prompts/", and "AGENTS.md"
-//   - a path under prompts/ that contains a subdirectory; Codex only reads
-//     top-level prompt files
+//     conventions; this package accepts only "skills/" and "agents/"
 var ErrInvalidArtifactPath = errors.New("codex: invalid artifact path")
 
 // ErrUnmanagedArtifactExists is returned from Installer.Install when the
@@ -47,20 +44,6 @@ var ErrInvalidArtifactPath = errors.New("codex: invalid artifact path")
 //	→ inventory.ErrAlreadyInstalled → ErrUnmanagedArtifactExists
 var ErrUnmanagedArtifactExists = errors.New("codex: unmanaged artifact already exists at destination")
 
-// ErrFrontmatterMergeConflict is returned when Entry.Tools["codex"].
-// Frontmatter conflicts with reserved fields produced by the neutral
-// transformation, such as the rule that Builder never emits frontmatter for
-// AGENTS.md.
-//
-// Keys that intentionally overwrite ordinary neutral fields are allowed. This
-// error is reserved for structurally impossible requests, such as demanding
-// frontmatter for an artifact kind that has no frontmatter representation. The
-// representative case is kind: rule, because AGENTS.md never carries
-// frontmatter.
-//
-// Note that agent output is TOML, so Entry.Tools["codex"].Frontmatter is merged
-// into a TOML table rather than YAML frontmatter; see the "frontmatter / TOML
-// conventions" section in doc.go. The neutral schema name remains
-// "Frontmatter", but that naming mismatch is not an error and agent output
-// merges successfully.
-var ErrFrontmatterMergeConflict = errors.New("codex: frontmatter merge conflict")
+// ErrInvalidSkillMetadata is returned when a skill's agents/openai.yaml
+// cannot be decoded as a YAML mapping while applying target policy.
+var ErrInvalidSkillMetadata = errors.New("codex: invalid skill metadata")

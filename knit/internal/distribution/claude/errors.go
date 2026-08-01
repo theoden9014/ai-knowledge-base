@@ -16,25 +16,8 @@ var ErrProjectRootNotConfigured = errors.New("claude: project root not configure
 //   - an absolute path
 //   - a path that escapes the Inventory root via parent traversal (".."), etc.
 //   - a path whose first segment does not match Claude Code directory
-//     conventions (this package only accepts "skills/", "agents/",
-//     "commands/", and "CLAUDE.md" as valid destinations)
+//     conventions (this package accepts only "skills/" and "agents/")
 var ErrInvalidArtifactPath = errors.New("claude: invalid artifact path")
-
-// ErrFrontmatterMergeConflict is returned when Entry.Tools["claude"].Frontmatter
-// structurally conflicts with reserved fields produced by neutral
-// transformation or with the generated output format.
-//
-// Keys with the same name as ordinary neutral fields (name / description /
-// skills, etc.) are allowed as overwrites. This error is for structurally
-// unrepresentable cases such as "requesting frontmatter for a kind that has no
-// frontmatter."
-//
-// Specifically, this error is returned in the following cases:
-//   - Tools["claude"].Frontmatter is non-empty on a source.KindRule entry
-//     (generated CLAUDE.md has no frontmatter)
-//   - Tools["claude"].Frontmatter is non-empty on a source.KindPrompt entry
-//     (generated commands/<name>.md currently has no frontmatter)
-var ErrFrontmatterMergeConflict = errors.New("claude: frontmatter merge conflict")
 
 // ErrUnmanagedArtifactExists is returned by Installer.Install when a file
 // already exists at the destination absolute path but the corresponding label

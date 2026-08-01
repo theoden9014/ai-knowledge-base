@@ -119,6 +119,27 @@ body of agent x
 	}
 }
 
+func TestLoader_LoadPack_acceptsPackRootFilesystem(t *testing.T) {
+	fsys := fstest.MapFS{
+		"manifest.yaml": {Data: []byte(`pack: p
+version: 0.1.0
+description: root pack
+entries:
+  - id: p.skill.a
+    path: skills/a
+`)},
+		"skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: skill\nname: p-a\ndescription: d\n---\nbody\n")},
+	}
+
+	pack, _, err := newLoaderForTest(t).LoadPack(context.Background(), fsys, ".")
+	if err != nil {
+		t.Fatalf("LoadPack() error = %v", err)
+	}
+	if pack.Name != "p" {
+		t.Errorf("Pack.Name = %q, want p", pack.Name)
+	}
+}
+
 func TestLoader_LoadPack_errors(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -209,6 +230,63 @@ entries:
 			wantKind: ErrIDMismatch,
 		},
 		{
+			name: "manifest pack does not match directory",
+			fsys: fstest.MapFS{
+				"p/manifest.yaml": {Data: []byte(`pack: q
+version: 0.1.0
+description: d
+entries:
+  - id: q.skill.a
+    path: skills/a
+`)},
+			},
+			packDir:  "p",
+			wantKind: ErrPackMismatch,
+		},
+		{
+			name: "entry id pack does not match manifest",
+			fsys: fstest.MapFS{
+				"p/manifest.yaml": {Data: []byte(`pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: q.skill.a
+    path: skills/a
+`)},
+			},
+			packDir:  "p",
+			wantKind: ErrPackMismatch,
+		},
+		{
+			name: "frontmatter kind does not match id",
+			fsys: fstest.MapFS{
+				"p/manifest.yaml": {Data: []byte(`pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.skill.a
+    path: skills/a
+`)},
+				"p/skills/a/SKILL.md": {Data: []byte("---\nid: p.skill.a\nkind: agent\nname: p-a\ndescription: d\n---\nbody\n")},
+			},
+			packDir:  "p",
+			wantKind: ErrKindMismatch,
+		},
+		{
+			name: "entry path name does not match id",
+			fsys: fstest.MapFS{
+				"p/manifest.yaml": {Data: []byte(`pack: p
+version: 0.1.0
+description: d
+entries:
+  - id: p.skill.a
+    path: skills/b
+`)},
+			},
+			packDir:  "p",
+			wantKind: ErrPathMismatch,
+		},
+		{
 			name: "duplicate entry id in manifest",
 			fsys: fstest.MapFS{
 				"p/manifest.yaml": {Data: []byte(`pack: p
@@ -287,16 +365,16 @@ version: 0.1.0
 description: d
 default_tools: [claude]
 entries:
-  - id: p.rule.r
-    path: rules/r.md
+  - id: p.skill.s
+    path: skills/s
 `)},
-		"p/rules/r.md": {Data: []byte(`---
-id: p.rule.r
-kind: rule
-name: p-r
-description: rule r
+		"p/skills/s/SKILL.md": {Data: []byte(`---
+id: p.skill.s
+kind: skill
+name: p-s
+description: skill s
 ---
-rule body
+skill body
 `)},
 	}
 	l := newLoaderForTest(t)
